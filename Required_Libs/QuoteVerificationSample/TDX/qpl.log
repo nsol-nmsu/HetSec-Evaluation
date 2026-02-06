@@ -1,0 +1,119 @@
+[APP] Info: ECDSA quote path: tdx_quote.bin
+[APP] Quote verification with QVL, support both SGX and TDX quote:
+[APP] Info: tee_get_quote_supplemental_data_version_and_size successfully returned.
+[APP] Info: latest supplemental data major version: 3, minor version: 3, size: 664
+[QCNL] Info:  JSON config file /etc/sgx_default_qcnl.conf is loaded successfully. 
+[QCNL] Info:  JSON config file /etc/sgx_default_qcnl.conf is loaded successfully. 
+[QCNL] Info:  Getting pck crl. 
+[QCNL] Info:  Fetching from the local cache for: 'https://api.trustedservices.intel.com/sgx/certification/v4/pckcrl?ca=platform&encoding=der' 
+[QCNL] Info:  Cache missed. 
+[QCNL] Info:  Data not found in local cache. Trying to fetch response from remote URL: 'https://api.trustedservices.intel.com/sgx/certification/v4/'. 
+[QCNL] Info:  Request URL https://api.trustedservices.intel.com/sgx/certification/v4/pckcrl?ca=platform&encoding=der 
+[QCNL] Info:  HTTP status code: 200 
+[QCNL] Info:  Successfully fetched certificate from remote URL: 'https://api.trustedservices.intel.com/sgx/certification/v4/'. 
+[QCNL] Info:  sgx-pck-crl-issuer-chain: -----BEGIN CERTIFICATE-----
+MIICljCCAj2gAwIBAgIVAJVvXc29G+HpQEnJ1PQzzgFXC95UMAoGCCqGSM49BAMC
+MGgxGjAYBgNVBAMMEUludGVsIFNHWCBSb290IENBMRowGAYDVQQKDBFJbnRlbCBD
+b3Jwb3JhdGlvbjEUMBIGA1UEBwwLU2FudGEgQ2xhcmExCzAJBgNVBAgMAkNBMQsw
+CQYDVQQGEwJVUzAeFw0xODA1MjExMDUwMTBaFw0zMzA1MjExMDUwMTBaMHAxIjAg
+BgNVBAMMGUludGVsIFNHWCBQQ0sgUGxhdGZvcm0gQ0ExGjAYBgNVBAoMEUludGVs
+IENvcnBvcmF0aW9uMRQwEgYDVQQHDAtTYW50YSBDbGFyYTELMAkGA1UECAwCQ0Ex
+CzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAENSB/7t21lXSO
+2Cuzpxw74eJB72EyDGgW5rXCtx2tVTLq6hKk6z+UiRZCnqR7psOvgqFeSxlmTlJl
+eTmi2WYz3qOBuzCBuDAfBgNVHSMEGDAWgBQiZQzWWp00ifODtJVSv1AbOScGrDBS
+BgNVHR8ESzBJMEegRaBDhkFodHRwczovL2NlcnRpZmljYXRlcy50cnVzdGVkc2Vy
+dmljZXMuaW50ZWwuY29tL0ludGVsU0dYUm9vdENBLmRlcjAdBgNVHQ4EFgQUlW9d
+zb0b4elAScnU9DPOAVcL3lQwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYB
+Af8CAQAwCgYIKoZIzj0EAwIDRwAwRAIgXsVki0w+i6VYGW3UF/22uaXe0YJDj1Ue
+nA+TjD1ai5cCICYb1SAmD5xkfTVpvo4UoyiSYxrDWLmUR4CI9NKyfPN+
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIICjzCCAjSgAwIBAgIUImUM1lqdNInzg7SVUr9QGzknBqwwCgYIKoZIzj0EAwIw
+aDEaMBgGA1UEAwwRSW50ZWwgU0dYIFJvb3QgQ0ExGjAYBgNVBAoMEUludGVsIENv
+cnBvcmF0aW9uMRQwEgYDVQQHDAtTYW50YSBDbGFyYTELMAkGA1UECAwCQ0ExCzAJ
+BgNVBAYTAlVTMB4XDTE4MDUyMTEwNDUxMFoXDTQ5MTIzMTIzNTk1OVowaDEaMBgG
+A1UEAwwRSW50ZWwgU0dYIFJvb3QgQ0ExGjAYBgNVBAoMEUludGVsIENvcnBvcmF0
+aW9uMRQwEgYDVQQHDAtTYW50YSBDbGFyYTELMAkGA1UECAwCQ0ExCzAJBgNVBAYT
+AlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEC6nEwMDIYZOj/iPWsCzaEKi7
+1OiOSLRFhWGjbnBVJfVnkY4u3IjkDYYL0MxO4mqsyYjlBalTVYxFP2sJBK5zlKOB
+uzCBuDAfBgNVHSMEGDAWgBQiZQzWWp00ifODtJVSv1AbOScGrDBSBgNVHR8ESzBJ
+MEegRaBDhkFodHRwczovL2NlcnRpZmljYXRlcy50cnVzdGVkc2VydmljZXMuaW50
+ZWwuY29tL0ludGVsU0dYUm9vdENBLmRlcjAdBgNVHQ4EFgQUImUM1lqdNInzg7SV
+Ur9QGzknBqwwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8CAQEwCgYI
+KoZIzj0EAwIDSQAwRgIhAOW/5QkR+S9CiSDcNoowLuPRLsWGf/Yi7GSX94BgwTwg
+AiEA4J0lrHoMs+Xo5o/sX6O9QWxHRAvZUGOdRQ7cvqRXaqI=
+-----END CERTIFICATE-----
+ 
+[QCNL] Info:  Header 'Cache-Control' not found. 
+[QCNL] Info:  Updated file cache successfully. 
+[QCNL] Info:  Caching collateral 'https://api.trustedservices.intel.com/sgx/certification/v4/pckcrl?ca=platform&encoding=der' for 86400 seconds. 
+[QCNL] Info:  Getting tcb info. 
+[QCNL] Info:  Fetching from the local cache for: 'https://api.trustedservices.intel.com/tdx/certification/v4/tcb?fmspc=00806F050000&update=standard' 
+[QCNL] Info:  Cache missed. 
+[QCNL] Info:  Data not found in local cache. Trying to fetch response from remote URL: 'https://api.trustedservices.intel.com/tdx/certification/v4/'. 
+[QCNL] Info:  Request URL https://api.trustedservices.intel.com/tdx/certification/v4/tcb?fmspc=00806F050000&update=standard 
+[QCNL] Info:  HTTP status code: 200 
+[QCNL] Info:  Successfully fetched certificate from remote URL: 'https://api.trustedservices.intel.com/tdx/certification/v4/'. 
+[QCNL] Info:  Header 'sgx-tcb-info-issuer-chain' not found. 
+[QCNL] Info:  tcbinfo: {"tcbInfo":{"id":"TDX","version":3,"issueDate":"2026-01-16T00:01:02Z","nextUpdate":"2026-02-15T00:01:02Z","fmspc":"00806F050000","pceId":"0000","tcbType":0,"tcbEvaluationDataNumber":18,"tdxModule":{"mrsigner":"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","attributes":"0000000000000000","attributesMask":"FFFFFFFFFFFFFFFF"},"tdxModuleIdentities":[{"id":"TDX_03","mrsigner":"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","attributes":"0000000000000000","attributesMask":"FFFFFFFFFFFFFFFF","tcbLevels":[{"tcb":{"isvsvn":3},"tcbDate":"2024-11-13T00:00:00Z","tcbStatus":"UpToDate"}]},{"id":"TDX_01","mrsigner":"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","attributes":"0000000000000000","attributesMask":"FFFFFFFFFFFFFFFF","tcbLevels":[{"tcb":{"isvsvn":6},"tcbDate":"2024-11-13T00:00:00Z","tcbStatus":"UpToDate"},{"tcb":{"isvsvn":4},"tcbDate":"2024-03-13T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-01036","INTEL-SA-01099"]},{"tcb":{"isvsvn":2},"tcbDate":"2023-08-09T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-01036","INTEL-SA-01099"]}]}],"tcbLevels":[{"tcb":{"sgxtcbcomponents":[{"svn":8,"category":"BIOS","type":"Early Microcode Update"},{"svn":8,"category":"OS/VMM","type":"SGX Late Microcode Update"},{"svn":2,"category":"OS/VMM","type":"TXT SINIT"},{"svn":2,"category":"BIOS"},{"svn":4,"category":"BIOS"},{"svn":1,"category":"BIOS"},{"svn":0},{"svn":6,"category":"OS/VMM","type":"SEAMLDR ACM"},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":11,"tdxtcbcomponents":[{"svn":5,"category":"OS/VMM","type":"TDX Module"},{"svn":0,"category":"OS/VMM","type":"TDX Module"},{"svn":8,"category":"OS/VMM","type":"TDX Late Microcode Update"},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}]},"tcbDate":"2024-11-13T00:00:00Z","tcbStatus":"UpToDate"},{"tcb":{"sgxtcbcomponents":[{"svn":7,"category":"BIOS","type":"Early Microcode Update"},{"svn":7,"category":"OS/VMM","type":"SGX Late Microcode Update"},{"svn":2,"category":"OS/VMM","type":"TXT SINIT"},{"svn":2,"category":"BIOS"},{"svn":3,"category":"BIOS"},{"svn":1,"category":"BIOS"},{"svn":0},{"svn":3,"category":"OS/VMM","type":"SEAMLDR ACM"},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"[QCNL] Info:  tcb-info-issuer-chain: {"tcbInfo":{"id":"TDX","version":3,"issueDate":"2026-01-16T00:01:02Z","nextUpdate":"2026-02-15T00:01:02Z","fmspc":"00806F050000","pceId":"0000","tcbType":0,"tcbEvaluationDataNumber":18,"tdxModule":{"mrsigner":"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","attributes":"0000000000000000","attributesMask":"FFFFFFFFFFFFFFFF"},"tdxModuleIdentities":[{"id":"TDX_03","mrsigner":"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","attributes":"0000000000000000","attributesMask":"FFFFFFFFFFFFFFFF","tcbLevels":[{"tcb":{"isvsvn":3},"tcbDate":"2024-11-13T00:00:00Z","tcbStatus":"UpToDate"}]},{"id":"TDX_01","mrsigner":"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","attributes":"0000000000000000","attributesMask":"FFFFFFFFFFFFFFFF","tcbLevels":[{"tcb":{"isvsvn":6},"tcbDate":"2024-11-13T00:00:00Z","tcbStatus":"UpToDate"},{"tcb":{"isvsvn":4},"tcbDate":"2024-03-13T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-01036","INTEL-SA-01099"]},{"tcb":{"isvsvn":2},"tcbDate":"2023-08-09T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-01036","INTEL-SA-01099"]}]}],"tcbLevels":[{"tcb":{"sgxtcbcomponents":[{"svn":8,"category":"BIOS","type":"Early Microcode Update"},{"svn":8,"category":"OS/VMM","type":"SGX Late Microcode Update"},{"svn":2,"category":"OS/VMM","type":"TXT SINIT"},{"svn":2,"category":"BIOS"},{"svn":4,"category":"BIOS"},{"svn":1,"category":"BIOS"},{"svn":0},{"svn":6,"category":"OS/VMM","type":"SEAMLDR ACM"},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":11,"tdxtcbcomponents":[{"svn":5,"category":"OS/VMM","type":"TDX Module"},{"svn":0,"category":"OS/VMM","type":"TDX Module"},{"svn":8,"category":"OS/VMM","type":"TDX Late Microcode Update"},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}]},"tcbDate":"2024-11-13T00:00:00Z","tcbStatus":"UpToDate"},{"tcb":{"sgxtcbcomponents":[{"svn":7,"category":"BIOS","type":"Early Microcode Update"},{"svn":7,"category":"OS/VMM","type":"SGX Late Microcode Update"},{"svn":2,"category":"OS/VMM","type":"TXT SINIT"},{"svn":2,"category":"BIOS"},{"svn":3,"category":"BIOS"},{"svn":1,"category":"BIOS"},{"svn":0},{"svn":3,"category":"OS/VMM","type":"SEAMLDR ACM"},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0[QCNL] Info:  Header 'Cache-Control' not found. 
+[QCNL] Info:  Updated file cache successfully. 
+[QCNL] Info:  Caching collateral 'https://api.trustedservices.intel.com/tdx/certification/v4/tcb?fmspc=00806F050000&update=standard' for 86400 seconds. 
+[QCNL] Info:  Getting quote enclave identity. 
+[QCNL] Info:  Fetching from the local cache for: 'https://api.trustedservices.intel.com/tdx/certification/v4/qe/identity?update=standard' 
+[QCNL] Info:  Cache missed. 
+[QCNL] Info:  Data not found in local cache. Trying to fetch response from remote URL: 'https://api.trustedservices.intel.com/tdx/certification/v4/'. 
+[QCNL] Info:  Request URL https://api.trustedservices.intel.com/tdx/certification/v4/qe/identity?update=standard 
+[QCNL] Info:  HTTP status code: 200 
+[QCNL] Info:  Successfully fetched certificate from remote URL: 'https://api.trustedservices.intel.com/tdx/certification/v4/'. 
+[QCNL] Info:  qe identity: {"enclaveIdentity":{"id":"TD_QE","version":2,"issueDate":"2026-01-15T23:54:58Z","nextUpdate":"2026-02-14T23:54:58Z","tcbEvaluationDataNumber":18,"miscselect":"00000000","miscselectMask":"FFFFFFFF","attributes":"11000000000000000000000000000000","attributesMask":"FBFFFFFFFFFFFFFF0000000000000000","mrsigner":"DC9E2A7C6F948F17474E34A7FC43ED030F7C1563F1BABDDF6340C82E0E54A8C5","isvprodid":2,"tcbLevels":[{"tcb":{"isvsvn":4},"tcbDate":"2024-11-13T00:00:00Z","tcbStatus":"UpToDate"}]},"signature":"37d99c498ba31318502f44e43cc15c7cf642bf0c9c507966296757b1ed7304a10da2e7fda69a34d4ea39bf9967405a676bfb16be5af0855a1737473507ae3744"} 
+[QCNL] Info:  sgx-enclave-identity-issuer-chain: -----BEGIN CERTIFICATE-----
+MIICjTCCAjKgAwIBAgIUfjiC1ftVKUpASY5FhAPpFJG99FUwCgYIKoZIzj0EAwIw
+aDEaMBgGA1UEAwwRSW50ZWwgU0dYIFJvb3QgQ0ExGjAYBgNVBAoMEUludGVsIENv
+cnBvcmF0aW9uMRQwEgYDVQQHDAtTYW50YSBDbGFyYTELMAkGA1UECAwCQ0ExCzAJ
+BgNVBAYTAlVTMB4XDTI1MDUwNjA5MjUwMFoXDTMyMDUwNjA5MjUwMFowbDEeMBwG
+A1UEAwwVSW50ZWwgU0dYIFRDQiBTaWduaW5nMRowGAYDVQQKDBFJbnRlbCBDb3Jw
+b3JhdGlvbjEUMBIGA1UEBwwLU2FudGEgQ2xhcmExCzAJBgNVBAgMAkNBMQswCQYD
+VQQGEwJVUzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABENFG8xzydWRfK92bmGv
+P+mAh91PEyV7Jh6FGJd5ndE9aBH7R3E4A7ubrlh/zN3C4xvpoouGlirMba+W2lju
+ypajgbUwgbIwHwYDVR0jBBgwFoAUImUM1lqdNInzg7SVUr9QGzknBqwwUgYDVR0f
+BEswSTBHoEWgQ4ZBaHR0cHM6Ly9jZXJ0aWZpY2F0ZXMudHJ1c3RlZHNlcnZpY2Vz
+LmludGVsLmNvbS9JbnRlbFNHWFJvb3RDQS5kZXIwHQYDVR0OBBYEFH44gtX7VSlK
+QEmORYQD6RSRvfRVMA4GA1UdDwEB/wQEAwIGwDAMBgNVHRMBAf8EAjAAMAoGCCqG
+SM49BAMCA0kAMEYCIQDdmmRuAo3qCO8TC1IoJMITAoOEw4dlgEBHzSz1TuMSTAIh
+AKVTqOkt59+co0O3m3hC+v5Fb00FjYWcgeu3EijOULo5
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIICjzCCAjSgAwIBAgIUImUM1lqdNInzg7SVUr9QGzknBqwwCgYIKoZIzj0EAwIw
+aDEaMBgGA1UEAwwRSW50ZWwgU0dYIFJvb3QgQ0ExGjAYBgNVBAoMEUludGVsIENv
+cnBvcmF0aW9uMRQwEgYDVQQHDAtTYW50YSBDbGFyYTELMAkGA1UECAwCQ0ExCzAJ
+BgNVBAYTAlVTMB4XDTE4MDUyMTEwNDUxMFoXDTQ5MTIzMTIzNTk1OVowaDEaMBgG
+A1UEAwwRSW50ZWwgU0dYIFJvb3QgQ0ExGjAYBgNVBAoMEUludGVsIENvcnBvcmF0
+aW9uMRQwEgYDVQQHDAtTYW50YSBDbGFyYTELMAkGA1UECAwCQ0ExCzAJBgNVBAYT
+AlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEC6nEwMDIYZOj/iPWsCzaEKi7
+1OiOSLRFhWGjbnBVJfVnkY4u3IjkDYYL0MxO4mqsyYjlBalTVYxFP2sJBK5zlKOB
+uzCBuDAfBgNVHSMEGDAWgBQiZQzWWp00ifODtJVSv1AbOScGrDBSBgNVHR8ESzBJ
+MEegRaBDhkFodHRwczovL2NlcnRpZmljYXRlcy50cnVzdGVkc2VydmljZXMuaW50
+ZWwuY29tL0ludGVsU0dYUm9vdENBLmRlcjAdBgNVHQ4EFgQUImUM1lqdNInzg7SV
+Ur9QGzknBqwwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8CAQEwCgYI
+KoZIzj0EAwIDSQAwRgIhAOW/5QkR+S9CiSDcNoowLuPRLsWGf/Yi7GSX94BgwTwg
+AiEA4J0lrHoMs+Xo5o/sX6O9QWxHRAvZUGOdRQ7cvqRXaqI=
+-----END CERTIFICATE-----
+ 
+[QCNL] Info:  Header 'Cache-Control' not found. 
+[QCNL] Info:  Updated file cache successfully. 
+[QCNL] Info:  Caching collateral 'https://api.trustedservices.intel.com/tdx/certification/v4/qe/identity?update=standard' for 86400 seconds. 
+[QCNL] Info:  Getting root ca crl. 
+[QCNL] Info:  Fetching from the local cache for: 'https://certificates.trustedservices.intel.com/IntelSGXRootCA.der' 
+[QCNL] Info:  Cache missed. 
+[QCNL] Info:  Data not found in local cache. Trying to fetch response from remote URL: 'https://certificates.trustedservices.intel.com/IntelSGXRootCA.der'. 
+[QCNL] Info:  Request URL https://certificates.trustedservices.intel.com/IntelSGXRootCA.der 
+[QCNL] Info:  HTTP status code: 200 
+[QCNL] Info:  Successfully fetched certificate from remote URL: 'https://certificates.trustedservices.intel.com/IntelSGXRootCA.der'. 
+[QCNL] Info:  Header 'Cache-Control' not found. 
+[QCNL] Info:  Updated file cache successfully. 
+[QCNL] Info:  Caching collateral 'https://certificates.trustedservices.intel.com/IntelSGXRootCA.der' for 86400 seconds. 
+[APP] Info: App: tee_verify_quote successfully returned.
+[APP] Warning: App: Verification completed with Non-terminal result: a002
+[APP] Info: Supplemental data Major Version: 3
+[APP] Info: Supplemental data Minor Version: 3
+[APP] Info: Advisory ID: INTEL-SA-01010,INTEL-SA-01036,INTEL-SA-01076,INTEL-SA-01079,INTEL-SA-01099,INTEL-SA-01103,INTEL-SA-01111

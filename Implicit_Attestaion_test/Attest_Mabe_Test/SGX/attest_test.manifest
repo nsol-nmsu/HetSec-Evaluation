@@ -1,0 +1,121 @@
+[loader]
+entrypoint = "file:/usr/local/lib/x86_64-linux-gnu/gramine/libsysdb.so"
+log_level = "trace"
+insecure__use_cmdline_argv = true
+
+[loader.env]
+LD_LIBRARY_PATH = "/lib:/usr/lib:/lib/x86_64-linux-gnu:/usr//lib/x86_64-linux-gnu"
+HOME = "/home/gtorresz"
+OMP_NUM_THREADS = "8"
+PYTHONUNBUFFERED = "1"
+
+[libos]
+entrypoint = "/usr/bin/python3.10"
+
+[[fs.mounts]]
+path = "/usr/bin/python3.10"
+uri = "file:/usr/bin/python3.10"
+
+[[fs.mounts]]
+path = "/lib"
+uri = "file:/usr/local/lib/x86_64-linux-gnu/gramine/runtime/glibc"
+
+[[fs.mounts]]
+path = "/usr/lib"
+uri = "file:/usr/lib"
+
+[[fs.mounts]]
+path = "/usr/local/lib"
+uri = "file:/usr/local/lib"
+
+[[fs.mounts]]
+path = "/lib/x86_64-linux-gnu"
+uri = "file:/lib/x86_64-linux-gnu"
+
+[[fs.mounts]]
+path = "/usr//lib/x86_64-linux-gnu"
+uri = "file:/usr//lib/x86_64-linux-gnu"
+
+[[fs.mounts]]
+path = "/usr/lib/python3.10"
+uri = "file:/usr/lib/python3.10"
+
+[[fs.mounts]]
+path = "/usr/lib/python3.10/lib-dynload"
+uri = "file:/usr/lib/python3.10/lib-dynload"
+
+[[fs.mounts]]
+path = "/home/gtorresz/.local/lib/python3.10/site-packages"
+uri = "file:/home/gtorresz/.local/lib/python3.10/site-packages"
+
+[[fs.mounts]]
+path = "/usr/local/lib/python3.10/dist-packages"
+uri = "file:/usr/local/lib/python3.10/dist-packages"
+
+[[fs.mounts]]
+path = "/usr/lib/python3/dist-packages"
+uri = "file:/usr/lib/python3/dist-packages"
+
+[[fs.mounts]]
+path = "/etc"
+uri = "file:/etc"
+
+[[fs.mounts]]
+type = "tmpfs"
+path = "/tmp"
+
+[sgx]
+enclave_size = "16G"
+max_threads = 32
+edmm_enable = false
+trusted_files = [
+    { uri = "file:/usr/bin/python3.10" },
+    { uri = "file:/usr/local/lib/x86_64-linux-gnu/gramine/libsysdb.so" },
+    { uri = "file:/usr/local/lib/x86_64-linux-gnu/gramine/runtime/glibc/" },
+    { uri = "file:/usr/lib/" },
+    { uri = "file:/usr/local/lib/" },
+    { uri = "file:/lib/x86_64-linux-gnu/" },
+    { uri = "file:/usr//lib/x86_64-linux-gnu/" },
+    { uri = "file:/usr/lib/python3.10/" },
+    { uri = "file:/usr/lib/python3.10/lib-dynload/" },
+    { uri = "file:/home/gtorresz/.local/lib/python3.10/site-packages/" },
+    { uri = "file:/usr/local/lib/python3.10/dist-packages/" },
+    { uri = "file:/usr/lib/python3/dist-packages/" },
+]
+allowed_files = [
+    "file:result.txt",
+    "file:data",
+    "file:src",
+    "file:certificate.pem",
+    "file:key.pem",
+    "file:src/MABE-decrypt",
+    "file:/etc/nsswitch.conf",
+    "file:/etc/ethers",
+    "file:/etc/hosts",
+    "file:/etc/group",
+    "file:/etc/passwd",
+    "file:/etc/localtime",
+    "file:/etc/resolv.conf",
+    "file:/etc/host.conf",
+    "file:/tmp/",
+    "file:/etc/gai.conf",
+    "file:uuid",
+]
+isvprodid = 0
+isvsvn = 0
+remote_attestation = "none"
+debug = false
+enable_stats = false
+use_exinfo = false
+
+[sgx.cpu_features]
+avx = "unspecified"
+avx512 = "unspecified"
+amx = "unspecified"
+mpx = "disabled"
+pkru = "disabled"
+
+[sys]
+enable_sigterm_injection = true
+enable_extra_runtime_domain_names_conf = true
+insecure__allow_eventfd = true

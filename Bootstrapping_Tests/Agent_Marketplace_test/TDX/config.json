@@ -1,0 +1,9 @@
+{
+  "cloud_provider": "azure",
+  "trustauthority_url": "https://portal.eu.trustauthority.intel.com",
+  "trustauthority_api_url": "https://api.eu.trustauthority.intel.com",
+  "trustauthority_api_key": "djE6MWI1NjA1MWItNzQxMi00N2ZkLTk0YmYtMTc2ZGRjOTZiZTNjOlhtSzRZS0lQTngxbmhzaDNVWXBpQ2FwWHFic2kzUHdTNmdwTThhQmo=",
+    "tpm": {
+        "ak_handle": "81000003"
+    }  
+}

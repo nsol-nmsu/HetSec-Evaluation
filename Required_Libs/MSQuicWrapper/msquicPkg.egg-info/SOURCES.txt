@@ -1,0 +1,7 @@
+MSQuicSocket.cpp
+MSQuicWrapper.cpp
+setup.py
+msquicPkg.egg-info/PKG-INFO
+msquicPkg.egg-info/SOURCES.txt
+msquicPkg.egg-info/dependency_links.txt
+msquicPkg.egg-info/top_level.txt
