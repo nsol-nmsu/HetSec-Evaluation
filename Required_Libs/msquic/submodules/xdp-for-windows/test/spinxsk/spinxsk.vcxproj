@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="spinxsk.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)test\common\lib\util\util.vcxproj">
+      <Project>{bdd99a80-0936-47b0-918d-04cf3b472fb0}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <ProjectGuid>{a831b9f7-3948-48cc-b4f7-db725ef13408}</ProjectGuid>
+    <TargetName>spinxsk</TargetName>
+    <UndockedType>exe</UndockedType>
+    <ImportEbpf>true</ImportEbpf>
+    <ImportWnt>true</ImportWnt>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)src\xdp.cpp.props" />
+  <ItemDefinitionGroup>
+    <PreBuildEvent>
+      <Command>
+        tracewpp.exe -odir:$(IntDir) -scan:$(ProjectDir)trace.h $(ProjectDir)*.c -cfgdir:"$(WindowsSdkDir)bin\$(TargetPlatformVersion)\WppConfig\Rev1"
+      </Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        $(SolutionDir)published\private;
+        $(SolutionDir)src\rtl\inc;
+        $(SolutionDir)test\common\inc;
+        $(IntDir);
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        ntdll.lib;
+        onecore.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(SolutionDir)src\xdp.targets" />
+</Project>

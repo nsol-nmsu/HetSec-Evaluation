@@ -1,0 +1,16 @@
+imagePullSecrets:
+  - name: regcred
+
+imagePullPolicy: IfNotPresent
+
+simulation:
+  OE_SIMULATION: "1"
+  
+resourceInjection: "disabled"
+
+dcap: {}
+
+server:
+  image: docker.io/library/pyserver
+  imageVersion: latest
+

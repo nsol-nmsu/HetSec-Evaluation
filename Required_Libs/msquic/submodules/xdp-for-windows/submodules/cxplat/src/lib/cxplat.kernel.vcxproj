@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{E680F075-FEE8-421B-A9F1-DAD0A1C537D3}</ProjectGuid>
+    <TargetName>cxplat</TargetName>
+    <UndockedType>drvlib</UndockedType>
+    <UndockedDir>$(MSBuildThisFileDirectory)\..\..\submodules\undocked\</UndockedDir>
+    <UndockedVerFile>$(MSBuildThisFileDirectory)\..\..\version.json</UndockedVerFile>
+    <UndockedOut>$(SolutionDir)artifacts\</UndockedOut>
+    <UndockedSourceLink>true</UndockedSourceLink>
+  </PropertyGroup>
+  <Import Project="$(UndockedDir)vs\windows.undocked.props" />
+  <ItemGroup>
+    <ClInclude Include="cxplat_trace.h" />
+    <ClInclude Include="cxplat_winkernel.h" />
+    <ClCompile Include="cxplat_winkernel.c" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        ..\inc;
+        ..\..\inc;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        SECURITY_KERNEL;
+        SECURITY_WIN32;
+        POOL_ZERO_DOWN_LEVEL_SUPPORT=1;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(UndockedDir)vs\windows.undocked.targets" />
+</Project>

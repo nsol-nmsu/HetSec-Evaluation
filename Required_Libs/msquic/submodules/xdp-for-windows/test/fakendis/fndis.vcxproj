@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="driver.c" />
+    <ClCompile Include="poll.c" />
+    <ClCompile Include="pollbackchannel.c" />
+    <ClCompile Include="polldpc.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="precomp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FilesToPackage Include="$(TargetPath)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)src\rtl\rtl.vcxproj">
+      <Project>{043c2162-639f-4fc8-b72c-f7c1bacb9db3}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <ProjectGuid>{8a82f294-00d6-40e1-9c55-6bc93c2bec0e}</ProjectGuid>
+    <TargetName>fndis</TargetName>
+    <UndockedType>sys</UndockedType>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)src\xdp.cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        inc;
+        $(SolutionDir)published\private;
+        $(SolutionDir)src\rtl\inc;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        NDIS_WDM=1;
+        NDIS685=1;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <WppEnabled>true</WppEnabled>
+      <WppScanConfigurationData>$(ProjectDir)trace.h</WppScanConfigurationData>
+      <WppRecorderEnabled>true</WppRecorderEnabled>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>fndis.def</ModuleDefinitionFile>
+      <AdditionalDependencies>
+        ndis.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(SolutionDir)src\xdp.targets" />
+</Project>

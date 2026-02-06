@@ -1,0 +1,86 @@
+//
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+//
+
+#pragma once
+
+typedef struct _XDP_EXTENSION_SET XDP_EXTENSION_SET;
+
+typedef struct _XDP_EXTENSION_REGISTRATION {
+    XDP_EXTENSION_INFO Info;
+    UINT8 Size;
+    UINT8 Alignment;
+    BOOLEAN InternalExtension;
+} XDP_EXTENSION_REGISTRATION;
+
+NTSTATUS
+XdpExtensionSetAssignLayout(
+    _In_ XDP_EXTENSION_SET *ExtensionSet,
+    _In_ UINT32 BaseOffset,
+    _In_ UINT8 BaseAlignment,
+    _Out_ UINT32 *Size,
+    _Out_ UINT8 *Alignment
+    );
+
+VOID
+XdpExtensionSetResetLayout(
+    _In_ XDP_EXTENSION_SET *ExtensionSet
+    );
+
+VOID
+XdpExtensionSetRegisterEntry(
+    _In_ XDP_EXTENSION_SET *ExtensionSet,
+    _In_ XDP_EXTENSION_INFO *Info
+    );
+
+VOID
+XdpExtensionSetEnableEntry(
+    _In_ XDP_EXTENSION_SET *ExtensionSet,
+    _In_z_ const WCHAR *ExtensionName
+    );
+
+VOID
+XdpExtensionSetSetInternalEntry(
+    _In_ XDP_EXTENSION_SET *ExtensionSet,
+    _In_z_ const WCHAR *ExtensionName
+    );
+
+VOID
+XdpExtensionSetResizeEntry(
+    _In_ XDP_EXTENSION_SET *ExtensionSet,
+    _In_z_ const WCHAR *ExtensionName,
+    _In_ UINT8 Size,
+    _In_ UINT8 Alignment
+    );
+
+VOID
+XdpExtensionSetGetExtension(
+    _In_ XDP_EXTENSION_SET *ExtensionSet,
+    _In_ XDP_EXTENSION_INFO *ExtensionInfo,
+    _Out_ XDP_EXTENSION *Extension
+    );
+
+BOOLEAN
+XdpExtensionSetIsLayoutAssigned(
+    _In_ XDP_EXTENSION_SET *ExtensionSet
+    );
+
+BOOLEAN
+XdpExtensionSetIsExtensionEnabled(
+    _In_ XDP_EXTENSION_SET *ExtensionSet,
+    _In_z_ const WCHAR *ExtensionName
+    );
+
+NTSTATUS
+XdpExtensionSetCreate(
+    _In_ XDP_EXTENSION_TYPE Type,
+    _In_opt_count_(ReservedExtensionCount) const XDP_EXTENSION_REGISTRATION *ReservedExtensions,
+    _In_ UINT16 ReservedExtensionCount,
+    _Out_ XDP_EXTENSION_SET **ExtensionSet
+    );
+
+VOID
+XdpExtensionSetCleanup(
+    _In_ XDP_EXTENSION_SET *ExtensionSet
+    );

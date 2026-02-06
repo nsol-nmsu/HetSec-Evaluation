@@ -1,0 +1,26 @@
+gramine-manifest \
+-Dlog_level=error \
+-Darch_libdir=/lib/x86_64-linux-gnu \
+-Dentrypoint=/usr/bin/python3.10 \
+pytorch.manifest.template > pytorch.manifest
+
+gramine-sgx-sign \
+--manifest pytorch.manifest \
+--output pytorch.manifest.sgx
+
+server-side command - gramine-sgx ./pytorch src/async_fed_serverMSquic.py
+client-side command - client.py
+
+
+gramine-manifest \
+-Dlog_level=error \
+-Darch_libdir=/lib/x86_64-linux-gnu \
+-Dentrypoint=/usr/bin/python3.10 \
+tcpServer.manifest.template > tcpServer.manifest
+
+gramine-sgx-sign \
+--manifest tcpServer.manifest \
+--output tcpServer.manifest.sgx
+
+server-side command - gramine-sgx ./tcpServer src/async_fed_serverMSquic.py
+client-side command - client.py

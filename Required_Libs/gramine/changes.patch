@@ -1,0 +1,1235 @@
+diff --git a/debian/rules b/debian/rules
+old mode 100755
+new mode 100644
+diff --git a/libos/src/net/ip.c b/libos/src/net/ip.c
+index 1a9e595b..4c865d76 100644
+--- a/libos/src/net/ip.c
++++ b/libos/src/net/ip.c
+@@ -681,7 +681,7 @@ static int send(struct libos_handle* handle, struct iovec* iov, size_t iov_len,
+             return -EINVAL;
+         }
+ 
+-        if (cmsg->cmsg_level != SOL_SOCKET) {
++        if (cmsg->cmsg_level != SOL_SOCKET && cmsg->cmsg_level != IPPROTO_IPV6 && cmsg->cmsg_level != IPPROTO_IP) {
+             /*
+              * We currently don't support:
+              * - SOL_UDP:  UDP_SEGMENT
+@@ -693,22 +693,23 @@ static int send(struct libos_handle* handle, struct iovec* iov, size_t iov_len,
+             return -EINVAL;
+         }
+ 
+-        switch (cmsg->cmsg_type) {
+-            /* We currently don't support below SOL_SOCKET types. */
+-            case SO_MARK:
+-            case SO_TIMESTAMPING_OLD:
+-            case SCM_TXTIME:
+-                return -EINVAL;
++        if (cmsg->cmsg_level == SOL_SOCKET) {
++            switch (cmsg->cmsg_type) {
++                /* We currently don't support below SOL_SOCKET types. */
++                case SO_MARK:
++                case SO_TIMESTAMPING_OLD:
++                case SCM_TXTIME:
++                    return -EINVAL;
+ 
+-            /* SCM_RIGHTS and SCM_CREDENTIALS are semantically in SOL_UNIX, simply ignored */
+-            case SCM_RIGHTS:
+-            case SCM_CREDENTIALS:
+-                break;
++                /* SCM_RIGHTS and SCM_CREDENTIALS are semantically in SOL_UNIX, simply ignored */
++                case SCM_RIGHTS:
++                case SCM_CREDENTIALS:
++                    break;
+ 
+-            default:
+-                return -EINVAL;
++                default:
++                    return -EINVAL;
++            }
+         }
+-
+         rest_msg_controllen -= CMSG_ALIGN(cmsg->cmsg_len);
+         cmsg = (struct cmsghdr*)((char*)cmsg + CMSG_ALIGN(cmsg->cmsg_len));
+     }
+@@ -747,8 +748,9 @@ static int send(struct libos_handle* handle, struct iovec* iov, size_t iov_len,
+         linux_to_pal_sockaddr(addr, &pal_ip_addr);
+     }
+ 
+-    int ret = PalSocketSend(sock->pal_handle, iov, iov_len, out_size, addr ? &pal_ip_addr : NULL,
+-                            force_nonblocking);
++    int ret = PalSocketSendT(sock->pal_handle, iov, iov_len, out_size, addr ? &pal_ip_addr : NULL,
++                            force_nonblocking, msg_control, msg_controllen);
++                            
+     ret = (ret == -PAL_ERROR_TOOLONG) ? -EMSGSIZE : pal_to_unix_errno(ret);
+     return ret;
+ }
+@@ -771,13 +773,13 @@ static int recv(struct libos_handle* handle, struct iovec* iov, size_t iov_len,
+     }
+ 
+     struct pal_socket_addr pal_ip_addr;
+-    int ret = PalSocketRecv(handle->info.sock.pal_handle, iov, iov_len, out_total_size,
+-                            addr ? &pal_ip_addr : NULL, force_nonblocking);
++    int ret = PalSocketRecvT(handle->info.sock.pal_handle, iov, iov_len, out_total_size,
++                            addr ? &pal_ip_addr : NULL, force_nonblocking, msg_control, msg_controllen_ptr);
+     if (ret < 0) {
+         return pal_to_unix_errno(ret);
+     }
+ 
+-    if (msg_control && msg_controllen_ptr) {
++    //if (msg_control && msg_controllen_ptr) {
+         /*
+          * We currently don't support:
+          * - SOL_TCP:    TCP_CM_INQ
+@@ -788,8 +790,8 @@ static int recv(struct libos_handle* handle, struct iovec* iov, size_t iov_len,
+          *
+          *  Note that SCM_RIGHTS and SCM_CREDENTIALS are not possible on TCP/UDP sockets.
+          */
+-        *msg_controllen_ptr = 0;
+-    }
++    //    *msg_controllen_ptr = 0;
++    //}
+ 
+     if (addr) {
+         struct sockaddr_storage linux_addr;
+diff --git a/libos/src/sys/libos_socket.c b/libos/src/sys/libos_socket.c
+index db8e07a5..e60d68b4 100644
+--- a/libos/src/sys/libos_socket.c
++++ b/libos/src/sys/libos_socket.c
+@@ -946,8 +946,8 @@ ssize_t do_recvmsg(struct libos_handle* handle, struct iovec* iov, size_t iov_le
+                 force_nonblocking = true;
+             }
+ 
+-            ret = sock->ops->recv(handle, &tmp_iov, 1, /*msg_control=*/NULL,
+-                                  /*msg_controllen_ptr=*/NULL, &tmp_iov.iov_len, /*addr=*/NULL,
++            ret = sock->ops->recv(handle, &tmp_iov, 1, msg_control,
++                                  msg_controllen_ptr, &tmp_iov.iov_len, /*addr=*/NULL,
+                                   /*addrlen_ptr=*/NULL, force_nonblocking);
+             if (ret == -EAGAIN && sock->peek.data_size) {
+                 /* We will just return what we have already. */
+diff --git a/libos/test/regression/asm/x86_64/meson.build b/libos/test/regression/asm/x86_64/meson.build
+index 974cc11f..e69de29b 100644
+--- a/libos/test/regression/asm/x86_64/meson.build
++++ b/libos/test/regression/asm/x86_64/meson.build
+@@ -1,27 +0,0 @@
+-common_lib = static_library('common_lib',
+-    nasm_gen.process('../../../common/x86_64/exit.nasm')
+-)
+-
+-tests = {
+-    'iret_emulation': {},
+-}
+-
+-install_dir = pkglibdir / 'tests' / 'libos' / 'regression' / 'asm' / 'x86_64'
+-
+-foreach name, params : tests
+-    filenames = nasm_gen.process('@0@.nasm'.format(name))
+-
+-    exe = executable(name,
+-        filenames,
+-
+-        link_with: [
+-            params.get('link_with', [common_lib]),
+-        ],
+-
+-        link_args: params.get('link_args', ['-nostdlib', '-static']),
+-        include_directories: params.get('include_directories', []),
+-
+-        install: true,
+-        install_dir: install_dir,
+-    )
+-endforeach
+diff --git a/libos/test/regression/scripts/bar.sh b/libos/test/regression/scripts/bar.sh
+old mode 100755
+new mode 100644
+diff --git a/libos/test/regression/scripts/foo.sh b/libos/test/regression/scripts/foo.sh
+old mode 100755
+new mode 100644
+diff --git a/pal/include/pal/pal.h b/pal/include/pal/pal.h
+index 259082fb..a56d41e4 100644
+--- a/pal/include/pal/pal.h
++++ b/pal/include/pal/pal.h
+@@ -626,7 +626,8 @@ int PalSocketConnect(PAL_HANDLE handle, struct pal_socket_addr* addr,
+  */
+ int PalSocketSend(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
+                   struct pal_socket_addr* addr, bool force_nonblocking);
+-
++int PalSocketSendT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                  struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t msg_controllen_ptr);
+ /*!
+  * \brief Receive data.
+  *
+@@ -650,7 +651,8 @@ int PalSocketSend(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t*
+  */
+ int PalSocketRecv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
+                   struct pal_socket_addr* addr, bool force_nonblocking);
+-
++int PalSocketRecvT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
++                  struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr);
+ /*
+  * Thread creation
+  */
+diff --git a/pal/include/pal_internal.h b/pal/include/pal_internal.h
+index e149a9f0..7e2f4794 100644
+--- a/pal/include/pal_internal.h
++++ b/pal/include/pal_internal.h
+@@ -122,8 +122,12 @@ struct socket_ops {
+                    struct pal_socket_addr* out_local_addr, bool* out_inprogress);
+     int (*send)(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
+                 struct pal_socket_addr* addr, bool force_nonblocking);
++    int (*sendT)(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr);                
+     int (*recv)(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
+                 struct pal_socket_addr* addr, bool force_nonblocking);
++    int (*recvT)(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr);                
+ };
+ 
+ /*
+@@ -193,9 +197,12 @@ int _PalSocketConnect(PAL_HANDLE handle, struct pal_socket_addr* addr,
+                       struct pal_socket_addr* out_local_addr, bool* out_inprogress);
+ int _PalSocketSend(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
+                    struct pal_socket_addr* addr, bool force_nonblocking);
++int _PalSocketSendT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                   struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t msg_controllen_ptr);                   
+ int _PalSocketRecv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
+                    struct pal_socket_addr* addr, bool force_nonblocking);
+-
++int _PalSocketRecvT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
++                   struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr);
+ /* PalProcess and PalThread calls */
+ int _PalThreadCreate(PAL_HANDLE* handle, int (*callback)(void*), void* param);
+ noreturn void _PalThreadExit(int* clear_child_tid);
+diff --git a/pal/src/host/linux-sgx/gdb_integration/gramine_sgx_gdb.py b/pal/src/host/linux-sgx/gdb_integration/gramine_sgx_gdb.py
+index 5b0d411a..e69de29b 100644
+--- a/pal/src/host/linux-sgx/gdb_integration/gramine_sgx_gdb.py
++++ b/pal/src/host/linux-sgx/gdb_integration/gramine_sgx_gdb.py
+@@ -1,25 +0,0 @@
+-# SPDX-License-Identifier: LGPL-3.0-or-later
+-# Copyright (C) 2020 Intel Corporation
+-#                    Michał Kowalczyk <mkow@invisiblethingslab.com>
+-#                    Paweł Marczewski <pawel@invisiblethingslab.com>
+-
+-import os
+-
+-import gdb # pylint: disable=import-error
+-
+-def main():
+-    common_path = '../../gdb_integration/'
+-    for filename in [
+-            common_path + 'language_gdb.py',
+-            common_path + 'pagination_gdb.py',
+-            common_path + 'debug_map_gdb.py',
+-            common_path + 'gramine.gdb',
+-            'gramine_sgx.gdb',
+-    ]:
+-        print('[%s] Loading %s...' % (os.path.basename(__file__), filename))
+-        path = os.path.join(os.path.dirname(__file__), filename)
+-        gdb.execute('source ' + path)
+-
+-
+-if __name__ == '__main__':
+-    main()
+diff --git a/pal/src/host/linux-sgx/pal_sockets.c b/pal/src/host/linux-sgx/pal_sockets.c
+index ccc7f442..ca67cf12 100644
+--- a/pal/src/host/linux-sgx/pal_sockets.c
++++ b/pal/src/host/linux-sgx/pal_sockets.c
+@@ -345,6 +345,12 @@ static int attrsetbyhdl_common(PAL_HANDLE handle, PAL_STREAM_ATTR* attr) {
+         }
+         handle->sock.linger = attr->socket.linger;
+     }
++    int  Option = 1;
++    ocall_setsockopt(handle->sock.fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, (const void*)&Option, sizeof(Option));
++    ocall_setsockopt(handle->sock.fd, IPPROTO_IPV6, IPV6_RECVTCLASS, (const void*)&Option, sizeof(Option));
++    ocall_setsockopt(handle->sock.fd, IPPROTO_IP, IP_RECVTOS, (const void*)&Option, sizeof(Option));
++
++
+ 
+     if (attr->socket.recv_buf_size != handle->sock.recv_buf_size) {
+         if (attr->socket.recv_buf_size > INT_MAX || attr->socket.recv_buf_size % 2) {
+@@ -543,6 +549,30 @@ static int send(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* ou
+     return 0;
+ }
+ 
++static int sendT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t msg_controllen_ptr) {
++    assert(handle->hdr.type == PAL_TYPE_SOCKET);
++
++    struct sockaddr_storage sa_storage;
++    size_t linux_addrlen = 0;
++    if (addr) {
++        if (addr->domain != handle->sock.domain) {
++            return -PAL_ERROR_INVAL;
++        }
++        pal_to_linux_sockaddr(addr, &sa_storage, &linux_addrlen);
++        assert(linux_addrlen <= INT_MAX);
++    }
++
++    unsigned int flags = force_nonblocking ? MSG_DONTWAIT : 0;
++    ssize_t ret = ocall_send(handle->sock.fd, iov, iov_len, addr ? &sa_storage : NULL,
++                             linux_addrlen, msg_control, msg_controllen_ptr, flags);
++    if (ret < 0) {
++        return unix_to_pal_error(ret);
++    }
++    *out_size = ret;
++    return 0;
++}
++
+ static int recv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
+                 struct pal_socket_addr* addr, bool force_nonblocking) {
+     assert(handle->hdr.type == PAL_TYPE_SOCKET);
+@@ -573,6 +603,36 @@ static int recv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* ou
+     return 0;
+ }
+ 
++static int recvT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
++                struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr) {
++    assert(handle->hdr.type == PAL_TYPE_SOCKET);
++
++    struct sockaddr_storage sa_storage;
++    size_t linux_addrlen = addr ? sizeof(sa_storage) : 0;
++
++    unsigned int flags = force_nonblocking ? MSG_DONTWAIT : 0;
++    if (handle->sock.type == PAL_SOCKET_UDP) {
++        /* Reads from PAL UDP sockets always return the full packed length. See also the definition
++         * of `PalSocketRecv`. */
++        flags |= MSG_TRUNC;
++    }
++    ssize_t ret = ocall_recv(handle->sock.fd, iov, iov_len, addr ? &sa_storage : NULL,
++                             &linux_addrlen, msg_control, msg_controllen_ptr, flags);
++    if (ret < 0) {
++        return unix_to_pal_error(ret);
++    }
++    size_t size = ret;
++    if (addr) {
++        ret = verify_ip_addr(handle->sock.domain, &sa_storage, linux_addrlen);
++        if (ret < 0) {
++            return ret;
++        }
++        linux_to_pal_sockaddr(&sa_storage, addr);
++    }
++    *out_total_size = size;
++    return 0;
++}
++
+ static int delete_tcp(PAL_HANDLE handle, enum pal_delete_mode mode) {
+     assert(handle->hdr.type == PAL_TYPE_SOCKET);
+     int how;
+@@ -613,7 +673,9 @@ static struct socket_ops g_udp_sock_ops = {
+     .bind = bind,
+     .connect = connect,
+     .send = send,
++    .sendT = sendT,
+     .recv = recv,
++    .recvT = recvT,
+ };
+ 
+ static struct handle_ops g_tcp_handle_ops = {
+@@ -686,6 +748,14 @@ int _PalSocketSend(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t*
+     return handle->sock.ops->send(handle, iov, iov_len, out_size, addr, force_nonblocking);
+ }
+ 
++int _PalSocketSendT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                   struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t msg_controllen_ptr) {
++    if (!handle->sock.ops->send) {
++        return -PAL_ERROR_NOTSUPPORT;
++    }
++    return handle->sock.ops->sendT(handle, iov, iov_len, out_size, addr, force_nonblocking, msg_control, msg_controllen_ptr);
++}
++
+ int _PalSocketRecv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
+                    struct pal_socket_addr* addr, bool force_nonblocking) {
+     if (!handle->sock.ops->recv) {
+@@ -693,3 +763,11 @@ int _PalSocketRecv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t*
+     }
+     return handle->sock.ops->recv(handle, iov, iov_len, out_total_size, addr, force_nonblocking);
+ }
++
++int _PalSocketRecvT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
++                   struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr) {
++    if (!handle->sock.ops->recvT) {
++        return -PAL_ERROR_NOTSUPPORT;
++    }
++    return handle->sock.ops->recvT(handle, iov, iov_len, out_total_size, addr, force_nonblocking, msg_control, msg_controllen_ptr);
++}
+\ No newline at end of file
+diff --git a/pal/src/host/linux/pal_sockets.c b/pal/src/host/linux/pal_sockets.c
+index 8f59ba9d..3d8044e9 100644
+--- a/pal/src/host/linux/pal_sockets.c
++++ b/pal/src/host/linux/pal_sockets.c
+@@ -720,7 +720,18 @@ int _PalSocketSend(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t*
+     }
+     return handle->sock.ops->send(handle, iov, iov_len, out_size, addr, force_nonblocking);
+ }
+-
++int _PalSocketSendT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                  struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t msg_controllen_ptr) {
++    __UNUSED(handle);
++    __UNUSED(iov);
++    __UNUSED(iov_len);
++    __UNUSED(out_size);
++    __UNUSED(addr);
++    __UNUSED(force_nonblocking);
++    __UNUSED(msg_control);
++    __UNUSED(msg_controllen_ptr);                                    
++    return -PAL_ERROR_NOTSUPPORT;
++}
+ int _PalSocketRecv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
+                    struct pal_socket_addr* addr, bool force_nonblocking) {
+     if (!handle->sock.ops->recv) {
+@@ -728,3 +739,15 @@ int _PalSocketRecv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t*
+     }
+     return handle->sock.ops->recv(handle, iov, iov_len, out_total_size, addr, force_nonblocking);
+ }
++int _PalSocketRecvT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
++                   struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr) {
++    __UNUSED(handle);
++    __UNUSED(iov);
++    __UNUSED(iov_len);
++    __UNUSED(out_total_size);
++    __UNUSED(addr);
++    __UNUSED(force_nonblocking);
++    __UNUSED(msg_control);
++    __UNUSED(msg_controllen_ptr);                                    
++    return -PAL_ERROR_NOTSUPPORT;
++}
+\ No newline at end of file
+diff --git a/pal/src/host/skeleton/arch/x86_64/meson.build b/pal/src/host/skeleton/arch/x86_64/meson.build
+index 7178e36f..e69de29b 100644
+--- a/pal/src/host/skeleton/arch/x86_64/meson.build
++++ b/pal/src/host/skeleton/arch/x86_64/meson.build
+@@ -1 +0,0 @@
+-pal_skeleton_lds = meson.current_source_dir() / 'pal.lds'
+diff --git a/pal/src/pal_sockets.c b/pal/src/pal_sockets.c
+index 346e3b1a..22669561 100644
+--- a/pal/src/pal_sockets.c
++++ b/pal/src/pal_sockets.c
+@@ -39,9 +39,19 @@ int PalSocketSend(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t*
+     assert(handle->hdr.type == PAL_TYPE_SOCKET);
+     return _PalSocketSend(handle, iov, iov_len, out_size, addr, force_nonblocking);
+ }
+-
++int PalSocketSendT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_size,
++                  struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t msg_controllen_ptr) {
++    assert(handle->hdr.type == PAL_TYPE_SOCKET);
++    return _PalSocketSendT(handle, iov, iov_len, out_size, addr, force_nonblocking, msg_control, msg_controllen_ptr);
++}
+ int PalSocketRecv(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
+                   struct pal_socket_addr* addr, bool force_nonblocking) {
+     assert(handle->hdr.type == PAL_TYPE_SOCKET);
+     return _PalSocketRecv(handle, iov, iov_len, out_total_size, addr, force_nonblocking);
+ }
++
++int PalSocketRecvT(PAL_HANDLE handle, struct iovec* iov, size_t iov_len, size_t* out_total_size,
++                  struct pal_socket_addr* addr, bool force_nonblocking, void* msg_control, size_t* msg_controllen_ptr) {
++    assert(handle->hdr.type == PAL_TYPE_SOCKET);
++    return _PalSocketRecvT(handle, iov, iov_len, out_total_size, addr, force_nonblocking, msg_control, msg_controllen_ptr);
++}
+diff --git a/pal/src/pal_symbols b/pal/src/pal_symbols
+index 92a82cb2..690f62ed 100644
+--- a/pal/src/pal_symbols
++++ b/pal/src/pal_symbols
+@@ -26,7 +26,9 @@ PalSocketListen
+ PalSocketAccept
+ PalSocketConnect
+ PalSocketSend
++PalSocketSendT
+ PalSocketRecv
++PalSocketRecvT
+ PalSendHandle
+ PalReceiveHandle
+ PalStreamWaitForClient
+diff --git a/scripts/docker_seccomp.json b/scripts/docker_seccomp.json
+deleted file mode 120000
+index bf9f11b3..00000000
+--- a/scripts/docker_seccomp.json
++++ /dev/null
+@@ -1 +0,0 @@
+-docker_seccomp_mar_2021.json
+\ No newline at end of file
+diff --git a/scripts/docker_seccomp.json b/scripts/docker_seccomp.json
+new file mode 100644
+index 00000000..cad844b8
+--- /dev/null
++++ b/scripts/docker_seccomp.json
+@@ -0,0 +1,781 @@
++{
++	"defaultAction": "SCMP_ACT_ERRNO",
++	"archMap": [
++		{
++			"architecture": "SCMP_ARCH_X86_64",
++			"subArchitectures": [
++				"SCMP_ARCH_X86",
++				"SCMP_ARCH_X32"
++			]
++		},
++		{
++			"architecture": "SCMP_ARCH_AARCH64",
++			"subArchitectures": [
++				"SCMP_ARCH_ARM"
++			]
++		},
++		{
++			"architecture": "SCMP_ARCH_MIPS64",
++			"subArchitectures": [
++				"SCMP_ARCH_MIPS",
++				"SCMP_ARCH_MIPS64N32"
++			]
++		},
++		{
++			"architecture": "SCMP_ARCH_MIPS64N32",
++			"subArchitectures": [
++				"SCMP_ARCH_MIPS",
++				"SCMP_ARCH_MIPS64"
++			]
++		},
++		{
++			"architecture": "SCMP_ARCH_MIPSEL64",
++			"subArchitectures": [
++				"SCMP_ARCH_MIPSEL",
++				"SCMP_ARCH_MIPSEL64N32"
++			]
++		},
++		{
++			"architecture": "SCMP_ARCH_MIPSEL64N32",
++			"subArchitectures": [
++				"SCMP_ARCH_MIPSEL",
++				"SCMP_ARCH_MIPSEL64"
++			]
++		},
++		{
++			"architecture": "SCMP_ARCH_S390X",
++			"subArchitectures": [
++				"SCMP_ARCH_S390"
++			]
++		}
++	],
++	"syscalls": [
++		{
++			"names": [
++				"accept",
++				"accept4",
++				"access",
++				"adjtimex",
++				"alarm",
++				"bind",
++				"brk",
++				"capget",
++				"capset",
++				"chdir",
++				"chmod",
++				"chown",
++				"chown32",
++				"clock_adjtime",
++				"clock_adjtime64",
++				"clock_getres",
++				"clock_getres_time64",
++				"clock_gettime",
++				"clock_gettime64",
++				"clock_nanosleep",
++				"clock_nanosleep_time64",
++				"close",
++				"close_range",
++				"connect",
++				"copy_file_range",
++				"creat",
++				"dup",
++				"dup2",
++				"dup3",
++				"epoll_create",
++				"epoll_create1",
++				"epoll_ctl",
++				"epoll_ctl_old",
++				"epoll_pwait",
++				"epoll_pwait2",
++				"epoll_wait",
++				"epoll_wait_old",
++				"eventfd",
++				"eventfd2",
++				"execve",
++				"execveat",
++				"exit",
++				"exit_group",
++				"faccessat",
++				"faccessat2",
++				"fadvise64",
++				"fadvise64_64",
++				"fallocate",
++				"fanotify_mark",
++				"fchdir",
++				"fchmod",
++				"fchmodat",
++				"fchown",
++				"fchown32",
++				"fchownat",
++				"fcntl",
++				"fcntl64",
++				"fdatasync",
++				"fgetxattr",
++				"flistxattr",
++				"flock",
++				"fork",
++				"fremovexattr",
++				"fsetxattr",
++				"fstat",
++				"fstat64",
++				"fstatat64",
++				"fstatfs",
++				"fstatfs64",
++				"fsync",
++				"ftruncate",
++				"ftruncate64",
++				"futex",
++				"futex_time64",
++				"futimesat",
++				"getcpu",
++				"getcwd",
++				"getdents",
++				"getdents64",
++				"getegid",
++				"getegid32",
++				"geteuid",
++				"geteuid32",
++				"getgid",
++				"getgid32",
++				"getgroups",
++				"getgroups32",
++				"getitimer",
++				"getpeername",
++				"getpgid",
++				"getpgrp",
++				"getpid",
++				"getppid",
++				"getpriority",
++				"getrandom",
++				"getresgid",
++				"getresgid32",
++				"getresuid",
++				"getresuid32",
++				"getrlimit",
++				"get_robust_list",
++				"getrusage",
++				"getsid",
++				"getsockname",
++				"getsockopt",
++				"get_thread_area",
++				"gettid",
++				"gettimeofday",
++				"getuid",
++				"getuid32",
++				"getxattr",
++				"inotify_add_watch",
++				"inotify_init",
++				"inotify_init1",
++				"inotify_rm_watch",
++				"io_cancel",
++				"ioctl",
++				"io_destroy",
++				"io_getevents",
++				"io_pgetevents",
++				"io_pgetevents_time64",
++				"ioprio_get",
++				"ioprio_set",
++				"io_setup",
++				"io_submit",
++				"io_uring_enter",
++				"io_uring_register",
++				"io_uring_setup",
++				"ipc",
++				"kill",
++				"lchown",
++				"lchown32",
++				"lgetxattr",
++				"link",
++				"linkat",
++				"listen",
++				"listxattr",
++				"llistxattr",
++				"_llseek",
++				"lremovexattr",
++				"lseek",
++				"lsetxattr",
++				"lstat",
++				"lstat64",
++				"madvise",
++				"membarrier",
++				"memfd_create",
++				"mincore",
++				"mkdir",
++				"mkdirat",
++				"mknod",
++				"mknodat",
++				"mlock",
++				"mlock2",
++				"mlockall",
++				"mmap",
++				"mmap2",
++				"mprotect",
++				"mq_getsetattr",
++				"mq_notify",
++				"mq_open",
++				"mq_timedreceive",
++				"mq_timedreceive_time64",
++				"mq_timedsend",
++				"mq_timedsend_time64",
++				"mq_unlink",
++				"mremap",
++				"msgctl",
++				"msgget",
++				"msgrcv",
++				"msgsnd",
++				"msync",
++				"munlock",
++				"munlockall",
++				"munmap",
++				"nanosleep",
++				"newfstatat",
++				"_newselect",
++				"open",
++				"openat",
++				"openat2",
++				"pause",
++				"pidfd_open",
++				"pidfd_send_signal",
++				"pipe",
++				"pipe2",
++				"poll",
++				"ppoll",
++				"ppoll_time64",
++				"prctl",
++				"pread64",
++				"preadv",
++				"preadv2",
++				"prlimit64",
++				"pselect6",
++				"pselect6_time64",
++				"pwrite64",
++				"pwritev",
++				"pwritev2",
++				"read",
++				"readahead",
++				"readlink",
++				"readlinkat",
++				"readv",
++				"recv",
++				"recvfrom",
++				"recvmmsg",
++				"recvmmsg_time64",
++				"recvmsg",
++				"remap_file_pages",
++				"removexattr",
++				"rename",
++				"renameat",
++				"renameat2",
++				"restart_syscall",
++				"rmdir",
++				"rseq",
++				"rt_sigaction",
++				"rt_sigpending",
++				"rt_sigprocmask",
++				"rt_sigqueueinfo",
++				"rt_sigreturn",
++				"rt_sigsuspend",
++				"rt_sigtimedwait",
++				"rt_sigtimedwait_time64",
++				"rt_tgsigqueueinfo",
++				"sched_getaffinity",
++				"sched_getattr",
++				"sched_getparam",
++				"sched_get_priority_max",
++				"sched_get_priority_min",
++				"sched_getscheduler",
++				"sched_rr_get_interval",
++				"sched_rr_get_interval_time64",
++				"sched_setaffinity",
++				"sched_setattr",
++				"sched_setparam",
++				"sched_setscheduler",
++				"sched_yield",
++				"seccomp",
++				"select",
++				"semctl",
++				"semget",
++				"semop",
++				"semtimedop",
++				"semtimedop_time64",
++				"send",
++				"sendfile",
++				"sendfile64",
++				"sendmmsg",
++				"sendmsg",
++				"sendto",
++				"setfsgid",
++				"setfsgid32",
++				"setfsuid",
++				"setfsuid32",
++				"setgid",
++				"setgid32",
++				"setgroups",
++				"setgroups32",
++				"setitimer",
++				"setpgid",
++				"setpriority",
++				"setregid",
++				"setregid32",
++				"setresgid",
++				"setresgid32",
++				"setresuid",
++				"setresuid32",
++				"setreuid",
++				"setreuid32",
++				"setrlimit",
++				"set_robust_list",
++				"setsid",
++				"setsockopt",
++				"set_thread_area",
++				"set_tid_address",
++				"setuid",
++				"setuid32",
++				"setxattr",
++				"shmat",
++				"shmctl",
++				"shmdt",
++				"shmget",
++				"shutdown",
++				"sigaltstack",
++				"signalfd",
++				"signalfd4",
++				"sigprocmask",
++				"sigreturn",
++				"socket",
++				"socketcall",
++				"socketpair",
++				"splice",
++				"stat",
++				"stat64",
++				"statfs",
++				"statfs64",
++				"statx",
++				"symlink",
++				"symlinkat",
++				"sync",
++				"sync_file_range",
++				"syncfs",
++				"sysinfo",
++				"tee",
++				"tgkill",
++				"time",
++				"timer_create",
++				"timer_delete",
++				"timer_getoverrun",
++				"timer_gettime",
++				"timer_gettime64",
++				"timer_settime",
++				"timer_settime64",
++				"timerfd_create",
++				"timerfd_gettime",
++				"timerfd_gettime64",
++				"timerfd_settime",
++				"timerfd_settime64",
++				"times",
++				"tkill",
++				"truncate",
++				"truncate64",
++				"ugetrlimit",
++				"umask",
++				"uname",
++				"unlink",
++				"unlinkat",
++				"utime",
++				"utimensat",
++				"utimensat_time64",
++				"utimes",
++				"vfork",
++				"vmsplice",
++				"wait4",
++				"waitid",
++				"waitpid",
++				"write",
++				"writev"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"process_vm_readv",
++				"process_vm_writev",
++				"ptrace"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": null,
++			"comment": "",
++			"includes": {
++				"minKernel": "4.8"
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"personality"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [
++				{
++					"index": 0,
++					"value": 4294967295,
++					"op": "SCMP_CMP_EQ"
++				}
++			],
++			"comment": "",
++			"includes": {},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"personality"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [
++				{
++					"index": 0,
++					"value": 18446744073709158391,
++					"valueTwo": 0,
++					"op": "SCMP_CMP_MASKED_EQ"
++				}
++			],
++			"comment": "",
++			"includes": {},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"sync_file_range2"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"arches": [
++					"ppc64le"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"arm_fadvise64_64",
++				"arm_sync_file_range",
++				"sync_file_range2",
++				"breakpoint",
++				"cacheflush",
++				"set_tls"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"arches": [
++					"arm",
++					"arm64"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"arch_prctl"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"arches": [
++					"amd64",
++					"x32"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"modify_ldt"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"arches": [
++					"amd64",
++					"x32",
++					"x86"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"s390_pci_mmio_read",
++				"s390_pci_mmio_write",
++				"s390_runtime_instr"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"arches": [
++					"s390",
++					"s390x"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"open_by_handle_at"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_DAC_READ_SEARCH"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"bpf",
++				"clone",
++				"fanotify_init",
++				"fsconfig",
++				"fsmount",
++				"fsopen",
++				"fspick",
++				"lookup_dcookie",
++				"mount",
++				"move_mount",
++				"name_to_handle_at",
++				"open_tree",
++				"perf_event_open",
++				"quotactl",
++				"setdomainname",
++				"sethostname",
++				"setns",
++				"syslog",
++				"umount",
++				"umount2",
++				"unshare"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_ADMIN"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"clone"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [
++				{
++					"index": 0,
++					"value": 2114060288,
++					"op": "SCMP_CMP_MASKED_EQ"
++				}
++			],
++			"comment": "",
++			"includes": {},
++			"excludes": {
++				"caps": [
++					"CAP_SYS_ADMIN"
++				],
++				"arches": [
++					"s390",
++					"s390x"
++				]
++			}
++		},
++		{
++			"names": [
++				"clone"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [
++				{
++					"index": 1,
++					"value": 2114060288,
++					"op": "SCMP_CMP_MASKED_EQ"
++				}
++			],
++			"comment": "s390 parameter ordering for clone is different",
++			"includes": {
++				"arches": [
++					"s390",
++					"s390x"
++				]
++			},
++			"excludes": {
++				"caps": [
++					"CAP_SYS_ADMIN"
++				]
++			}
++		},
++		{
++			"names": [
++				"reboot"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_BOOT"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"chroot"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_CHROOT"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"delete_module",
++				"init_module",
++				"finit_module"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_MODULE"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"acct"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_PACCT"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"kcmp",
++				"pidfd_getfd",
++				"process_madvise",
++				"process_vm_readv",
++				"process_vm_writev",
++				"ptrace"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_PTRACE"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"iopl",
++				"ioperm"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_RAWIO"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"settimeofday",
++				"stime",
++				"clock_settime"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_TIME"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"vhangup"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_TTY_CONFIG"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"get_mempolicy",
++				"mbind",
++				"set_mempolicy"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYS_NICE"
++				]
++			},
++			"excludes": {}
++		},
++		{
++			"names": [
++				"syslog"
++			],
++			"action": "SCMP_ACT_ALLOW",
++			"args": [],
++			"comment": "",
++			"includes": {
++				"caps": [
++					"CAP_SYSLOG"
++				]
++			},
++			"excludes": {}
++		}
++	]
++}

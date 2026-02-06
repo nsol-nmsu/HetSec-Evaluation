@@ -1,0 +1,119 @@
+
+c:provider_lookup: 0.2288259429997197
+c:TLS_Socket_Creation: 0.15497480400017594
+c:proto_init: 0.0005264169999463775
+c:communication_init: 0.194495585000368
+c:token_init: 0.002192564000324637
+c:communication_conv: 15.954085365999617
+t:llm_turn: 5.984753690000161
+c:communication_conv: 20.53230034599983
+t:llm_turn: 6.459496630000103
+c:communication_conv: 20.5324207929998
+t:llm_turn: 6.459496630000103
+
+
+c:provider_lookup: 0.25148266199994396
+c:TLS_Socket_Creation: 0.17495840199990198
+c:proto_init: 0.0005907859999751963
+c:communication_init: 0.18871429599994372
+c:token_init: 0.0007862639999984822
+c:communication_conv: 14.453415705000225
+t:llm_turn: 6.364264015000117
+c:communication_conv: 18.46367433100022
+c:communication_conv: 18.46367433100022
+t:llm_turn: 6.364264015000117
+
+c:provider_lookup: 0.23415905399997428
+c:TLS_Socket_Creation: 0.15505712399999538
+c:proto_init: 0.0005350100004761771
+c:communication_init: 0.1786284429999796
+c:token_init: 0.000803664999693865
+c:communication_conv: 11.228416804000062
+t:llm_turn: 5.09556369899974
+c:communication_conv: 13.349656410999614
+t:llm_turn: 7.647400914999707
+c:communication_conv: 18.8991188469995
+t:llm_turn: 9.186997684999369
+c:communication_conv: 19.595971531999567
+c:communication_conv: 19.595971531999567
+t:llm_turn: 9.186997684999369
+
+
+c:provider_lookup: 0.2724132280000049
+c:TLS_Socket_Creation: 0.18099542799973278
+c:proto_init: 0.0006467939997492067
+c:communication_init: 0.21323285399967062
+c:token_init: 0.0008446140000160085
+c:communication_conv: 9.082843000999674
+t:llm_turn: 5.1896467939996
+c:communication_conv: 13.46525208499952
+t:llm_turn: 5.749631547999343
+c:communication_conv: 13.465367689999312
+t:llm_turn: 5.749631547999343
+
+
+c:provider_lookup: 0.24929850400030773
+c:TLS_Socket_Creation: 0.17083317900005568
+c:proto_init: 0.0005933850002293184
+c:communication_init: 0.19272517800027344
+c:token_init: 0.0011062870003115677
+c:communication_conv: 10.076412117000018
+t:llm_turn: 6.213835671000197
+c:communication_conv: 13.342573340999934
+c:communication_conv: 13.342573340999934
+t:llm_turn: 6.213835671000197
+
+
+c:provider_lookup: 0.24767100400003983
+c:TLS_Socket_Creation: 0.17181990800008862
+c:proto_init: 0.000588650000281632
+c:communication_init: 0.19641719299988836
+c:token_init: 0.0007984630001374171
+c:communication_conv: 6.473161884000092
+t:llm_turn: 7.832633507000082
+c:communication_conv: 11.23989061500015
+c:communication_conv: 11.23989061500015
+t:llm_turn: 7.832633507000082
+
+
+c:provider_lookup: 0.25049222500001633
+c:TLS_Socket_Creation: 0.18151334499998484
+c:proto_init: 0.0005690809994121082
+c:communication_init: 0.2050679790004324
+c:token_init: 0.0008821520000310556
+c:communication_conv: 10.092468954000196
+t:llm_turn: 6.473908808000033
+c:communication_conv: 14.931228342000395
+t:llm_turn: 8.400532547000239
+c:communication_conv: 14.931335876000503
+t:llm_turn: 8.400532547000239
+
+
+c:provider_lookup: 0.26777777600000263
+c:TLS_Socket_Creation: 0.17177432200014664
+c:proto_init: 0.0006036130002939899
+c:communication_init: 0.19088464300011765
+c:token_init: 0.0008788810000623926
+c:communication_conv: 8.83655280999983
+t:llm_turn: 4.3576719499997125
+c:communication_conv: 10.612374850999913
+t:llm_turn: 8.499686761999783
+c:communication_conv: 11.801229919999969
+c:communication_conv: 11.801229919999969
+t:llm_turn: 8.499686761999783
+
+
+c:provider_lookup: 0.2408700080000017
+c:TLS_Socket_Creation: 0.1643656960000044
+c:proto_init: 0.0005893649995414307
+c:communication_init: 0.1978639689996271
+c:token_init: 0.0008008790000531008
+c:communication_conv: 5.872678911000094
+t:llm_turn: 3.923343939999995
+c:communication_conv: 7.6735770660002345
+t:llm_turn: 5.145030601000144
+c:communication_conv: 13.674534871000105
+t:llm_turn: 7.098428171000251
+c:communication_conv: 14.336350443000356
+c:communication_conv: 14.336350443000356
+t:llm_turn: 7.098428171000251

@@ -1,0 +1,12 @@
+[submodule "submodules/ndis-driver-library"]
+	path = submodules/ndis-driver-library
+	url = https://github.com/microsoft/ndis-driver-library
+[submodule "submodules/wil"]
+	path = submodules/wil
+	url = https://github.com/microsoft/wil
+[submodule "submodules/net-offloads"]
+	path = submodules/net-offloads
+	url = https://github.com/microsoft/net-offloads.git
+[submodule "submodules/cxplat"]
+	path = submodules/cxplat
+	url = https://github.com/microsoft/cxplat

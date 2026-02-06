@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{435073CF-8546-47EB-B924-B12A17FC70EB}</ProjectGuid>
+    <TargetName>cxplattest</TargetName>
+    <UndockedType>sys</UndockedType>
+    <UndockedDir>$(SolutionDir)submodules\undocked\</UndockedDir>
+    <UndockedOut>$(SolutionDir)artifacts\</UndockedOut>
+    <UndockedSourceLink>true</UndockedSourceLink>
+  </PropertyGroup>
+  <Import Project="$(UndockedDir)vs\windows.undocked.props" />
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)\src\lib\cxplat.kernel.vcxproj">
+      <Project>{1e494654-9bfd-492f-bc31-36e2c73a782e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\lib\testlib.kernel.vcxproj">
+      <Project>{6DBEB7D2-4BCF-46B2-95CB-88DEF2F049D7}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\CxPlatTests.h" />
+    <ClCompile Include="driver.cpp" />
+    <ClCompile Include="control.cpp" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        ..;
+        ..\..;
+        $(SolutionDir)src\inc;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        SECURITY_KERNEL;
+        SECURITY_WIN32;
+        POOL_ZERO_DOWN_LEVEL_SUPPORT=1;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        cng.lib;
+        ksecdd.lib;
+        wdmsec.lib;
+        uuid.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(UndockedDir)vs\windows.undocked.targets" />
+</Project>

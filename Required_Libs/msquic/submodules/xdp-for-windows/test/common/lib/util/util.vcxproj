@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{bdd99a80-0936-47b0-918d-04cf3b472fb0}</ProjectGuid>
+    <TargetName>util</TargetName>
+    <UndockedType>lib</UndockedType>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)src\xdp.cpp.props" />
+  <ItemGroup>
+    <ClCompile Include="util.cpp" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        $(SolutionDir)src\rtl\inc;
+        $(SolutionDir)test\common\inc;
+        $(IntDir);
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(SolutionDir)src\xdp.targets" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <VCRedistVersion Condition="exists('$(VCInstallDir)Auxiliary\Build\Microsoft.VCRedistVersion.default.txt')">$([System.IO.File]::ReadAllText($(VCInstallDir)Auxiliary\Build\Microsoft.VCRedistVersion.default.txt).Trim())</VCRedistVersion>
+    <VCOutDir>$(OutDir)debugcrt\</VCOutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <PostBuildEvent>
+      <Command>xcopy "$(VCInstallDir)redist\MSVC\$(VCRedistVersion)\onecore\debug_nonredist\$(PlatformShortName)\Microsoft.VC$(PlatformToolsetVersion).DebugCRT\*.dll" "$(VCOutDir)" /D /Y &amp;&amp; xcopy "$(UniversalCRTSdkDir)\bin\$(TargetUniversalCRTVersion)\$(Platform)\ucrt\*.dll" "$(VCOutDir)" /D /Y </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+</Project>

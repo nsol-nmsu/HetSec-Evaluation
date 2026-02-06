@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="bind.c" />
+    <ClCompile Include="dispatch.c" />
+    <ClCompile Include="ebpfextension.c" />
+    <ClCompile Include="extensionset.c" />
+    <ClCompile Include="offload.c" />
+    <ClCompile Include="offloadqeo.c" />
+    <ClCompile Include="program.c" />
+    <ClCompile Include="programinspect.c" />
+    <ClCompile Include="queue.c" />
+    <ClCompile Include="redirect.c" />
+    <ClCompile Include="ring.c" />
+    <ClCompile Include="rx.c" />
+    <ClCompile Include="tx.c" />
+    <ClCompile Include="xsk.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="precomp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FilesToPackage Include="$(TargetPath)" />
+  </ItemGroup>
+  <PropertyGroup>
+    <ProjectGuid>{de26c8c2-f986-47c7-8e36-8a7cac1358ee}</ProjectGuid>
+    <TargetName>xdp</TargetName>
+    <UndockedType>sys</UndockedType>
+    <ImportEbpf>true</ImportEbpf>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)src\xdp.cpp.props" />
+  <Target Name="SetSourceRevisionId" BeforeTargets="ClCompile;ResourceCompile">
+    <Exec
+      Command="git describe --long --always --dirty --exclude=* --abbrev=8"
+      ConsoleToMSBuild="True"
+      IgnoreExitCode="False"
+      >
+      <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
+    </Exec>
+    <ItemGroup>
+      <ResourceCompile>
+        <PreprocessorDefinitions>
+          XDP_COMMIT_VERSION=$(SourceRevisionId);
+          %(PreprocessorDefinitions)
+        </PreprocessorDefinitions>
+      </ResourceCompile>
+      <ClCompile>
+        <PreprocessorDefinitions>
+          XDP_COMMIT_VERSION=$(SourceRevisionId);
+          %(PreprocessorDefinitions)
+        </PreprocessorDefinitions>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
+  <ItemGroup>
+    <ResourceCompile Include="xdp.rc">
+      <AdditionalIncludeDirectories>
+        $(SolutionDir)published\private;
+        $(SolutionDir)artifacts\obj\$(Platform)_$(Configuration)\xdpetw\;
+        $(SolutionDir)artifacts\obj\$(Platform)_$(Configuration)\xdppcw\;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        XDP_MAJOR_VERSION=$(XdpMajorVersion);
+        XDP_MINOR_VERSION=$(XdpMinorVersion);
+        XDP_PATCH_VERSION=$(XdpPatchVersion);
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_BUILDID)' != ''">
+        XDP_BUILD_VERSION=$(BUILD_BUILDID);
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)src\nmr\nmr.vcxproj">
+      <Project>{f389859e-1d0c-4f30-baec-6a5e44b8190e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)src\pollshim\pollshim.vcxproj">
+      <Project>{4a54653b-b380-4187-890b-7451f835b07a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)src\rtl\rtl.vcxproj">
+      <Project>{043c2162-639f-4fc8-b72c-f7c1bacb9db3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)src\xdpapi\xdpapi.vcxproj">
+      <Project>{0ccecb60-0538-4252-8c8e-23a92199cbe0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)src\xdplwf\xdplwf.vcxproj">
+      <Project>{63591dcb-0bbc-441c-a8a2-f882ee6a7d5c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)src\xdpetw\xdpetw.vcxproj">
+      <Project>{a87d995b-384f-4853-abdb-3ec024be18e3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)src\xdppcw\xdppcw.vcxproj">
+      <Project>{ed611744-b780-41a2-a995-2c100d86b3a6}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        $(ProjectDir);
+        inc;
+        $(SolutionDir)src\pollshim\inc;
+        $(SolutionDir)src\rtl\inc;
+        $(SolutionDir)src\xdplwf\inc;
+        $(SolutionDir)src\xdppcw\inc;
+        $(SolutionDir)published\private;
+        $(IntDir);
+        $(SolutionDir)artifacts\obj\$(Platform)_$(Configuration)\xdpetw\;
+        $(SolutionDir)artifacts\obj\$(Platform)_$(Configuration)\xdppcw\;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        NDIS_WDM=1;
+        NDIS684=1;
+        XDP_MAJOR_VERSION=$(XdpMajorVersion);
+        XDP_MINOR_VERSION=$(XdpMinorVersion);
+        XDP_PATCH_VERSION=$(XdpPatchVersion);
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_BUILDID)' != ''">
+        XDP_BUILD_VERSION=$(BUILD_BUILDID);
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <WppEnabled>true</WppEnabled>
+      <WppScanConfigurationData>$(SolutionDir)src\xdp\inc\xdptrace.h</WppScanConfigurationData>
+      <WppRecorderEnabled>true</WppRecorderEnabled>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        msnetioid.lib;
+        ndis.lib;
+        netio.lib;
+        uuid.lib;
+        wdmsec.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(LatestWdkPlatformVersion)' != '' And '$(LatestWdkPlatformVersion)' &gt;= '10.0.26100.0'">
+    <!-- a null check is needed to let nuget parse this before LatestWdkPlatformVersion is defined when packages are initially restored -->
+    <!-- volatileaccessk.lib is introduced in WDK version 10.0.22621.0, i.e., ge_release. -->
+    <Link>
+      <AdditionalDependencies>
+        volatileaccessk.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Inf Include="xdp.inx">
+      <CatalogFileName>xdp.cat</CatalogFileName>
+      <TimeStamp>$(XdpMajorVersion).$(XdpMinorVersion).$(XdpPatchVersion).0</TimeStamp>
+      <SpecifyDriverDirectiveVersion>true</SpecifyDriverDirectiveVersion>
+    </Inf>
+  </ItemGroup>
+  <Import Project="$(SolutionDir)src\xdp.targets" />
+</Project>

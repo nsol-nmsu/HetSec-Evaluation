@@ -1,0 +1,22 @@
+[0;1;32m●[0m aesmd.service - Intel(R) Architectural Enclave Service Manager
+     Loaded: loaded (/lib/systemd/system/aesmd.service; enabled; vendor preset: enabled)
+     Active: [0;1;32mactive (running)[0m since Wed 2026-01-14 10:59:08 UTC; 1s ago
+    Process: 86687 ExecStartPre=/opt/intel/sgx-aesm-service/aesm/linksgx.sh (code=exited, status=0/SUCCESS)
+    Process: 86701 ExecStartPre=/bin/mkdir -p /var/run/aesmd/ (code=exited, status=0/SUCCESS)
+    Process: 86702 ExecStartPre=/bin/chown -R aesmd:aesmd /var/run/aesmd/ (code=exited, status=0/SUCCESS)
+    Process: 86703 ExecStartPre=/bin/chmod 0755 /var/run/aesmd/ (code=exited, status=0/SUCCESS)
+    Process: 86704 ExecStartPre=/bin/chown -R aesmd:aesmd /var/opt/aesmd/ (code=exited, status=0/SUCCESS)
+    Process: 86705 ExecStartPre=/bin/chmod 0750 /var/opt/aesmd/ (code=exited, status=0/SUCCESS)
+    Process: 86706 ExecStart=/opt/intel/sgx-aesm-service/aesm/aesm_service (code=exited, status=0/SUCCESS)
+   Main PID: 86707 (aesm_service)
+      Tasks: 4 (limit: 77050)
+     Memory: 3.1M
+        CPU: 72ms
+     CGroup: /system.slice/aesmd.service
+             └─86707 /opt/intel/sgx-aesm-service/aesm/aesm_service
+
+Jan 14 10:59:08 SGX1 systemd[1]: Starting Intel(R) Architectural Enclave Service Manager...
+Jan 14 10:59:08 SGX1 aesm_service[86706]: aesm_service: warning: Turn to daemon. Use "--no-daemon" option to execute in foreground.
+Jan 14 10:59:08 SGX1 systemd[1]: Started Intel(R) Architectural Enclave Service Manager.
+Jan 14 10:59:08 SGX1 aesm_service[86707]: [0;1;31m[0;1;39m[0;1;31m[get_qpl_handle qe_logic.cpp:270] Cannot open Quote Provider Library libdcap_quoteprov.so.1 and libdcap_quoteprov.so[0m
+Jan 14 10:59:08 SGX1 aesm_service[86707]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mThe server sock is 0x6377ae658a00[0m

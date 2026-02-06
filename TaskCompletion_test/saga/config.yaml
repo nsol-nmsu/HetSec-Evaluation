@@ -1,0 +1,43 @@
+# MondoDB connection string (for tool-related data)
+mongo_uri_for_tools: mongodb://172.172.235.2:27017/saga_tools
+
+### CA ###
+ca:
+  # Endpoint where CA hosts relevant files
+  endpoint: http://172.172.235.2:8000
+  config:
+    COUNTRY_NAME: US
+    STATE_NAME: MA
+    LOCALITY_NAME: Boston
+    ORG_NAME: ca
+    COMMON_NAME: 172.172.235.2
+    IP: 172.172.235.2
+
+### PROVIDER ###
+provider:
+  endpoint: https://172.172.235.2:6000
+  config:
+    COUNTRY_NAME: US
+    STATE_NAME: MA
+    LOCALITY_NAME: Boston
+    ORG_NAME: provider
+    COMMON_NAME: 172.172.235.2
+    IP: 172.172.235.2
+
+### USER ###
+user:
+  config:
+    COUNTRY_NAME: US
+    STATE_NAME: MA
+    LOCALITY_NAME: Boston
+    ORG_NAME: user
+    COMMON_NAME: 172.172.235.2
+    IP: 172.172.235.2
+
+### AGENTS ###
+agent:
+  config:
+    COUNTRY_NAME: US
+    STATE_NAME: MA
+    LOCALITY_NAME: Boston
+    ORG_NAME: saga

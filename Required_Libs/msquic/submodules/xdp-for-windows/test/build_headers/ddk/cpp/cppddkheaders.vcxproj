@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="ddkheaders.cpp" />
+  </ItemGroup>
+  <PropertyGroup>
+    <ProjectGuid>{2e04098e-2d9d-48ae-b962-4c681f0897c7}</ProjectGuid>
+    <TargetName>cppddkheaders</TargetName>
+    <UndockedType>drvlib</UndockedType>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)src\xdp.cpp.props" />
+  <Import Project="$(SolutionDir)src\xdp.targets" />
+</Project>

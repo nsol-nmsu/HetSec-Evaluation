@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{ed611744-b780-41a2-a995-2c100d86b3a6}</ProjectGuid>
+    <TargetName>xdppcw</TargetName>
+    <UndockedType>none</UndockedType>
+    <UndockedUseDriverToolset>true</UndockedUseDriverToolset>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)src\xdp.cpp.props" />
+  <ItemGroup Label="WrappedTaskItems">
+    <Ctrpp Include="xdppcw.man">
+      <FileType>Manifest</FileType>
+    </Ctrpp>
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <Ctrpp>
+      <AddPrefix>XdpPcw</AddPrefix>
+      <HeaderFileNameForProvider>$(IntDir)%(Filename)counters.h</HeaderFileNameForProvider>
+      <GenerateResourceSourceFile>true</GenerateResourceSourceFile>
+      <HeaderFileNameForCounter>$(IntDir)%(Filename)_counterids.h</HeaderFileNameForCounter>
+      <ResourceFileName>$(IntDir)%(Filename)counters.rc</ResourceFileName>
+    </Ctrpp>
+  </ItemDefinitionGroup>
+  <Import Project="$(SolutionDir)src\xdp.targets" />
+  <Target Name="CopyFiles" BeforeTargets="Build">
+    <Copy SourceFiles="xdppcw.man" DestinationFolder="$(OutDir)" />
+  </Target>
+</Project>

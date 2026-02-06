@@ -1,0 +1,61 @@
+
+
+
+token_init: 0.0011173539969604462
+communication_proto_init: 0.001989810014492832
+communication_conv_init: 0.0009354569774586707
+llm_backend_init: 61.07726606000506
+
+
+token_init: 0.0008344480011146516
+communication_proto_init: 0.0015762449911562726
+communication_conv_init: 0.001269040018087253
+llm_backend_init: 100.17094715598796
+
+
+token_init: 0.0008454310009256005
+communication_proto_init: 0.0015727409918326885
+communication_conv_init: 0.0009020269935717806
+llm_backend_init: 118.34557616400707
+
+
+token_init: 0.0009024550090543926
+communication_proto_init: 0.0016621560062048957
+communication_conv_init: 0.0018077039712807164
+llm_backend_init: 24.51299342098355
+
+
+token_init: 0.0013641659897984937
+communication_proto_init: 0.002078069999697618
+communication_conv_init: 0.0009908100037137046
+llm_backend_init: 71.66333300199767
+
+
+token_init: 0.0007801780011504889
+communication_proto_init: 0.0015287550049833953
+communication_conv_init: 0.0009645990212447941
+llm_backend_init: 51.49248366201937
+
+
+token_init: 0.0007850779948057607
+communication_proto_init: 0.0016692170029273257
+communication_conv_init: 0.0009729669545777142
+llm_backend_init: 64.18963503302075
+
+
+token_init: 0.0007599429955007508
+communication_proto_init: 0.0015131729887798429
+communication_conv_init: 0.0007707019976805896
+llm_backend_init: 71.76171269298356
+
+
+token_init: 0.0009073969995370135
+communication_proto_init: 0.001721180000458844
+communication_conv_init: 0.00164576803217642
+llm_backend_init: 221.36414753898862
+
+
+token_init: 0.0008837010100251064
+communication_proto_init: 0.0015952799876686186
+communication_conv_init: 0.0008842180104693398
+llm_backend_init: 74.00653604400577

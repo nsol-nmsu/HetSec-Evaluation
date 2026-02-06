@@ -1,0 +1,130 @@
+
+
+
+c:provider_lookup: 0.27060603399877436
+c:TLS_Socket_Creation: 0.1732876089954516
+c:proto_init: 0.000579558007302694
+c:communication_init: 0.19796901399968192
+c:token_init: 0.0008044880087254569
+c:communication_conv: 9.786301596002886
+t:llm_turn: 8.598601669000345
+c:communication_conv: 11.332445514010033
+c:communication_conv: 11.332445514010033
+t:llm_turn: 8.598601669000345
+
+
+c:provider_lookup: 0.24599078600294888
+c:TLS_Socket_Creation: 0.1727483729919186
+c:proto_init: 0.0005566379986703396
+c:communication_init: 0.20037251399480738
+c:token_init: 0.0008149119967129081
+c:communication_conv: 6.276223549997667
+t:llm_turn: 10.487571341000148
+c:communication_conv: 8.620777481992263
+t:llm_turn: 11.27223435099586
+c:communication_conv: 8.620878606001497
+t:llm_turn: 11.27223435099586
+
+
+c:provider_lookup: 0.2748394710069988
+c:TLS_Socket_Creation: 0.16462255000078585
+c:proto_init: 0.000573705998249352
+c:communication_init: 0.19149205900612287
+c:token_init: 0.0008269210084108636
+c:communication_conv: 10.989503916003741
+t:llm_turn: 2.2267426809994504
+c:communication_conv: 11.69095248200756
+c:communication_conv: 11.69095248200756
+t:llm_turn: 2.2267426809994504
+
+
+c:provider_lookup: 0.27782421799201984
+c:TLS_Socket_Creation: 0.17653108898957726
+c:proto_init: 0.0005637409922201186
+c:communication_init: 0.19961864600190893
+c:token_init: 0.0007913489971542731
+c:communication_conv: 9.971724963004817
+t:llm_turn: 11.765447051002411
+c:communication_conv: 11.786900341016008
+c:communication_conv: 11.786900341016008
+t:llm_turn: 11.765447051002411
+
+
+c:provider_lookup: 0.2578512330073863
+c:TLS_Socket_Creation: 0.16032705899851862
+c:proto_init: 0.0008548909972887486
+c:communication_init: 0.19827823899686337
+c:token_init: 0.0008243619959102944
+c:communication_conv: 7.030273002004833
+t:llm_turn: 2.6671308719960507
+c:communication_conv: 10.667893165998976
+t:llm_turn: 4.226791180000873
+c:communication_conv: 22.097671977986465
+c:communication_conv: 22.097671977986465
+t:llm_turn: 4.226791180000873
+
+
+c:provider_lookup: 0.2337023349973606
+c:TLS_Socket_Creation: 0.1784225719893584
+c:proto_init: 0.0005778070044470951
+c:communication_init: 0.20212067700049374
+c:token_init: 0.0008154639945132658
+c:communication_conv: 6.188367807000759
+t:llm_turn: 12.78525084600551
+c:communication_conv: 7.755170691001695
+t:llm_turn: 13.455630592012312
+c:communication_conv: 7.755283242004225
+t:llm_turn: 13.455630592012312
+
+
+c:provider_lookup: 0.23759767500450835
+c:TLS_Socket_Creation: 0.17411598800390493
+c:proto_init: 0.0005847920110682026
+c:communication_init: 0.23659690500062425
+c:token_init: 0.0007892149878898636
+c:communication_conv: 15.968287907002377
+t:llm_turn: 17.429010680003557
+c:communication_conv: 25.261644316997263
+t:llm_turn: 46.155540249004844
+c:communication_conv: 42.706168874996365
+c:communication_conv: 42.706168874996365
+t:llm_turn: 46.155540249004844
+
+
+c:provider_lookup: 0.2470625830028439
+c:TLS_Socket_Creation: 0.18320136399415787
+c:proto_init: 0.0005314549925969914
+c:communication_init: 0.21009111500461586
+c:token_init: 0.0008204389887396246
+c:communication_conv: 9.770316682988778
+t:llm_turn: 12.685370564009645
+c:communication_conv: 11.416082718991674
+t:llm_turn: 13.317474315015716
+c:communication_conv: 11.416197815982741
+t:llm_turn: 13.317474315015716
+
+
+c:provider_lookup: 0.24546872400969733
+c:TLS_Socket_Creation: 0.17223516799276695
+c:proto_init: 0.0005688399978680536
+c:communication_init: 0.1956668089987943
+c:token_init: 0.0007357430004049093
+c:communication_conv: 9.093527967008413
+t:llm_turn: 9.253329198996653
+c:communication_conv: 11.24057182901015
+c:communication_conv: 11.24057182901015
+t:llm_turn: 9.253329198996653
+
+
+c:provider_lookup: 0.2790600119915325
+c:TLS_Socket_Creation: 0.1628723260073457
+c:proto_init: 0.0005941410054219887
+c:communication_init: 0.18551730499893893
+c:token_init: 0.0008052569901337847
+c:communication_conv: 9.062846264001564
+t:llm_turn: 10.670774862010148
+c:communication_conv: 14.737147134001134
+t:llm_turn: 13.071568831015611
+c:communication_conv: 30.935504487002618
+c:communication_conv: 30.935504487002618
+t:llm_turn: 13.071568831015611

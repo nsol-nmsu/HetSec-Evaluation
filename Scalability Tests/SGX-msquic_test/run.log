@@ -1,0 +1,18 @@
+Gramine is starting. Parsing TOML manifest file, this may take some time...
+Let's begin
+
+Experimental details:
+    Model     : mlp
+    Optimizer : sgd
+    Learning  : 0.01
+    Global Rounds   : 1
+
+    Federated parameters:
+    IID
+    Fraction of users  : 0.1
+    Local Batch size   : 10
+    Local Epochs       : 1
+
+../data/mnist/
+we made it here
+in the Handle

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{6DBEB7D2-4BCF-46B2-95CB-88DEF2F049D7}</ProjectGuid>
+    <TargetName>testlib</TargetName>
+    <UndockedType>drvlib</UndockedType>
+    <UndockedDir>$(SolutionDir)submodules\undocked\</UndockedDir>
+    <UndockedOut>$(SolutionDir)artifacts\</UndockedOut>
+    <UndockedSourceLink>true</UndockedSourceLink>
+  </PropertyGroup>
+  <Import Project="$(UndockedDir)vs\windows.undocked.props" />
+  <ItemGroup>
+    <ClInclude Include="precomp.h" />
+    <ClInclude Include="..\CxPlatTests.h" />
+    <ClCompile Include="CryptTest.cpp" />
+    <ClCompile Include="EventTest.cpp" />
+    <ClCompile Include="LockTest.cpp" />
+    <ClCompile Include="MemoryTest.cpp" />
+    <ClCompile Include="ProcTest.cpp" />
+    <ClCompile Include="ThreadTest.cpp" />
+    <ClCompile Include="TimeTest.cpp" />
+    <ClCompile Include="VectorTest.cpp" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        ..\;
+        $(SolutionDir)inc;
+        $(SolutionDir)\src\inc;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        SECURITY_KERNEL;
+        SECURITY_WIN32;
+        POOL_ZERO_DOWN_LEVEL_SUPPORT=1;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(UndockedDir)vs\windows.undocked.targets" />
+</Project>

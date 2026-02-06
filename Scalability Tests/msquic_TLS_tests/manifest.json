@@ -1,0 +1,52 @@
+{
+    "Packages": {
+        "server": {
+            "Debug": true,
+            "UniqueID": "<replace with mrenclave obtained by `oesign dump -e enclave.signed`>"
+        }
+    },
+    "Marbles": {
+        "server": {
+            "Package": "server",
+			"Parameters": {
+				"Env": {
+					"WEB_PORT": "5000"
+				}
+			},
+			"TLS": [
+				"web"
+			]            
+        }
+    },
+    "Secrets": {
+		"webCertShared": {
+			"Shared": true,
+			"Size": 256,
+			"Type": "cert-ecdsa",
+			"Cert": {
+				"Subject": {
+					"CommonName": "localhost"
+				},
+				"DNSNames": [
+					"localhost"
+				]
+			},
+			"ValidFor": 356
+		}
+    },    
+    "TLS":
+    {
+        "web": {
+            "Incoming": [
+                {
+                    "Port": "8443"
+                },
+                {
+                    "Port": "8080",
+                    "Cert": "certificate.pem",
+                    "DisableClientAuth": true
+                }
+            ]
+        }
+    }
+}
