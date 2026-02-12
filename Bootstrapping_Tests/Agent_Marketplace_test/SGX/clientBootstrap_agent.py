@@ -11,6 +11,11 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 
+
+coor_addr = "Insert IP Here"
+ap_addr = "Insert IP Here"
+
+
 key = bytes.fromhex("C09A05030C15CBC957E60D0678BD47451367E9BBC427EC5B5C60E9C6B286C87B")
 iv = bytes.fromhex("22dc9c199a5d430a95a4020b1348130a")
 cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
@@ -62,7 +67,7 @@ async def runTask(addr,ssl_ctx):
     ) 
     t_handshake = time.perf_counter()
 
-    await write_framed(writer, b'Attest_Start')
+    await write_framed(writer, b'Agent_Start')
     t_sendReq = time.perf_counter()
 
 
@@ -83,7 +88,7 @@ async def runTask(addr,ssl_ctx):
     writer.close()
     await writer.wait_closed()
 
-    await runTaskAttest(addr,ssl_ctx)
+    await runTaskAttest(coor_addr,ssl_ctx)
 
 async def runTaskAttest(addr,ssl_ctx):
     t0 = time.perf_counter()
@@ -139,14 +144,12 @@ async def main():
     ssl_ctx.verify_mode = ssl.CERT_NONE  # we verify via RA-TLS after handshake
     ssl_ctx.load_cert_chain('client.crt', 'client.key')
 
-    addr = "20.83.35.85"
-    addr = "57.154.240.53"
     port = random.randrange(2550,5000)
 
     tasks = []
     while i < 10000:  
         await asyncio.sleep(0.0001)
-        task = asyncio.create_task(runTask(addr,ssl_ctx))
+        task = asyncio.create_task(runTask(ap_addr,ssl_ctx))
         #task = asyncio.create_task(runTaskAttest1(addr,ssl_ctx))
         #task = asyncio.create_task(runTaskAttest2(addr,ssl_ctx))
         tasks.append(task)

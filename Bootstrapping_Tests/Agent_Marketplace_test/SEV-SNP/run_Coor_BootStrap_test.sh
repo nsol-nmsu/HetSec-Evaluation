@@ -1,0 +1,19 @@
+    python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
+sleep 5 
+python clientBootstrap_coor.py 
