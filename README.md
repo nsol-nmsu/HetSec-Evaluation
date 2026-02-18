@@ -5,3 +5,5 @@ Agentic AI systems are rapidly proliferating within multistakeholder ecosystems 
 
 ## Test Setup
 Please build all the required libaries to correct deploy our evaluation setup. 
+
+All expeirment deployments are detailed in there respective folders.
