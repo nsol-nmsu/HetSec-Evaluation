@@ -1,1 +1,0 @@
-option('libc', type: 'combo', choices: ['none', 'glibc', 'musl'], value: 'glibc', yield: true)

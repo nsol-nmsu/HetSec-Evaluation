@@ -1,0 +1,282 @@
+diff --git a/src/core/path.c b/src/core/path.c
+index a92c43a10..03f57c0a9 100644
+--- a/src/core/path.c
++++ b/src/core/path.c
+@@ -182,6 +182,9 @@ QuicConnGetPathByID(
+     return NULL;
+ }
+ 
++#include <arpa/inet.h> // for ntohs
++
++
+ _IRQL_requires_max_(PASSIVE_LEVEL)
+ _Ret_maybenull_
+ QUIC_PATH*
+@@ -191,23 +194,39 @@ QuicConnGetPathForPacket(
+     )
+ {
+     for (uint8_t i = 0; i < Connection->PathsCount; ++i) {
+-        if (!QuicAddrCompare(
+-                &Packet->Route->LocalAddress,
+-                &Connection->Paths[i].Route.LocalAddress) ||
+-            !QuicAddrCompare(
+-                &Packet->Route->RemoteAddress,
+-                &Connection->Paths[i].Route.RemoteAddress)) {
++        BOOLEAN LocalMatch =
++            QuicAddrCompare(&Packet->Route->LocalAddress,
++                            &Connection->Paths[i].Route.LocalAddress);
++
++        if (!LocalMatch) {
++
++            uint16_t PacketPort =
++                QuicAddrGetPort(&Packet->Route->LocalAddress);
++
++            uint16_t PathPort =
++                QuicAddrGetPort(&Connection->Paths[i].Route.LocalAddress);
++
++            if (PacketPort == PathPort &&
++                (QuicAddrIsWildCard(&Packet->Route->LocalAddress) ||
++                QuicAddrIsWildCard(&Connection->Paths[i].Route.LocalAddress))) {
++
++                LocalMatch = TRUE;
++            }
++        }
++
++        if (!LocalMatch ||
++            !QuicAddrCompare(&Packet->Route->RemoteAddress,
++                            &Connection->Paths[i].Route.RemoteAddress)) {
++
+             if (!Connection->State.HandshakeConfirmed) {
+-                //
+-                // Ignore packets on any other paths until connected/confirmed.
+-                //
+                 return NULL;
+             }
++
+             continue;
+         }
++
+         return &Connection->Paths[i];
+     }
+-
+     if (Connection->PathsCount == QUIC_MAX_PATH_COUNT) {
+         //
+         // See if any old paths share the same remote address, and is just a rebind.
+diff --git a/src/platform/datapath_epoll.c b/src/platform/datapath_epoll.c
+index d5730b087..4ba8ba74e 100644
+--- a/src/platform/datapath_epoll.c
++++ b/src/platform/datapath_epoll.c
+@@ -162,8 +162,11 @@ typedef struct CXPLAT_SEND_DATA {
+ } CXPLAT_SEND_DATA;
+ 
+ typedef struct CXPLAT_RECV_MSG_CONTROL_BUFFER {
+-    char Data[CMSG_SPACE(sizeof(struct in6_pktinfo)) + // IP_PKTINFO
+-              3 * CMSG_SPACE(sizeof(int))]; // TOS + IP_TTL
++    alignas(8) char Data[
++        CMSG_SPACE(sizeof(struct in6_pktinfo)) +   // pktinfo (v6)
++        CMSG_SPACE(sizeof(struct in_pktinfo)) +    // pktinfo (v4) optional, but you may see it
++        3 * CMSG_SPACE(sizeof(int))                // TOS/TCLASS, TTL/HOPLIMIT, etc
++    ];
+ 
+ } CXPLAT_RECV_MSG_CONTROL_BUFFER;
+ 
+@@ -171,6 +174,25 @@ CXPLAT_EVENT_COMPLETION CxPlatSocketContextUninitializeEventComplete;
+ CXPLAT_EVENT_COMPLETION CxPlatSocketContextFlushTxEventComplete;
+ CXPLAT_EVENT_COMPLETION CxPlatSocketContextIoEventComplete;
+ 
++static inline void
++CxPlatNormalizeSockaddrForSyscall(_Inout_ QUIC_ADDR* A)
++{
++    // Gramine dumps syscall args by interpreting sockaddr buffers.
++    // Ensure sa_family matches Linux values before any syscall.
++
++    if (A->Ip.sa_family == QUIC_ADDRESS_FAMILY_INET6) {
++        A->Ipv6.sin6_family = AF_INET6;
++    } else if (A->Ip.sa_family == QUIC_ADDRESS_FAMILY_INET) {
++        A->Ipv4.sin_family = AF_INET;
++    } else if (A->Ip.sa_family == AF_INET6 || A->Ip.sa_family == AF_INET) {
++        // already normalized
++    } else {
++        // Defensive: default to AF_INET6 if MsQuic left it in an internal value.
++        A->Ipv6.sin6_family = AF_INET6;
++    }
++}
++
++
+ void
+ CxPlatProcessorContextInitialize(
+     _In_ CXPLAT_DATAPATH* Datapath,
+@@ -631,7 +653,7 @@ CxPlatSocketContextInitialize(
+             goto Exit;
+         }
+ 
+-        //
++     /*   //
+         // On Linux, IP_HOPLIMIT does not exist. So we will use IP_RECVTTL, IPV6_RECVHOPLIMIT instead.
+         //
+         Option = TRUE;
+@@ -650,7 +672,7 @@ CxPlatSocketContextInitialize(
+                 Binding,
+                 Status,
+                 "setsockopt(IP_RECVTTL) failed");
+-            goto Exit;
++            //goto Exit;
+         }
+ 
+         Option = TRUE;
+@@ -669,8 +691,8 @@ CxPlatSocketContextInitialize(
+                 Binding,
+                 Status,
+                 "setsockopt(IPV6_RECVHOPLIMIT) failed");
+-            goto Exit;
+-        }
++            //goto Exit;
++        }*/
+ 
+     #ifdef UDP_GRO
+         if (SocketContext->DatapathPartition->Datapath->Features & CXPLAT_DATAPATH_FEATURE_RECV_COALESCING) {
+@@ -1649,6 +1671,9 @@ CxPlatSocketContextRecvComplete(
+                     CXPLAT_DBG_ASSERT(HopLimitTTL < 256);
+                     CXPLAT_DBG_ASSERT(HopLimitTTL > 0);
+                     FoundTTL = TRUE;
++                } else if (CMsg->cmsg_type == IP_PKTINFO) {
++                    // Optional: if you want v4 local address details.
++                    // Otherwise just ignore safely.
+                 } else {
+                     CXPLAT_DBG_ASSERT(FALSE);
+                 }
+@@ -1664,10 +1689,23 @@ CxPlatSocketContextRecvComplete(
+             }
+         }
+ 
+-        CXPLAT_FRE_ASSERT(FoundLocalAddr);
+-        CXPLAT_FRE_ASSERT(FoundTOS);
+-        CXPLAT_FRE_ASSERT(FoundTTL);
++        //CXPLAT_FRE_ASSERT(FoundLocalAddr);
++        //CXPLAT_FRE_ASSERT(FoundTOS);
++        //CXPLAT_FRE_ASSERT(FoundTTL);
++        if (!FoundLocalAddr) {
++            *LocalAddr = SocketContext->Binding->LocalAddress;
++            FoundLocalAddr = TRUE;
++        }
+ 
++        if (!FoundTOS) {
++            TOS = 0;
++            FoundTOS = TRUE;
++        }
++
++        if (!FoundTTL) {
++            HopLimitTTL = 64; // reasonable default
++            FoundTTL = TRUE;
++        }
+         QuicTraceEvent(
+             DatapathRecv,
+             "[data][%p] Recv %u bytes (segment=%hu) Src=%!ADDR! Dst=%!ADDR!",
+@@ -1771,6 +1809,10 @@ CxPlatSocketReceiveCoalesced(
+         CxPlatZeroMemory(&IoBlock->Route, sizeof(CXPLAT_ROUTE));
+         IoBlock->Route.State = RouteResolved;
+ 
++        CxPlatZeroMemory(&RecvMsgHdr, sizeof(RecvMsgHdr));
++        CxPlatZeroMemory(&RecvMsgControl, sizeof(RecvMsgControl));
++        CxPlatZeroMemory(&RecvIov, sizeof(RecvIov));
++
+         struct msghdr* MsgHdr = &RecvMsgHdr.msg_hdr;
+         MsgHdr->msg_name = &IoBlock->Route.RemoteAddress;
+         MsgHdr->msg_namelen = sizeof(IoBlock->Route.RemoteAddress);
+@@ -1782,6 +1824,11 @@ CxPlatSocketReceiveCoalesced(
+         RecvIov.iov_base = (char*)IoBlock + DatapathPartition->Datapath->RecvBlockBufferOffset;
+         RecvIov.iov_len = CXPLAT_LARGE_IO_BUFFER_SIZE;
+ 
++        CxPlatZeroMemory(&IoBlock->Route.RemoteAddress, sizeof(IoBlock->Route.RemoteAddress));
++        IoBlock->Route.RemoteAddress.Ipv6.sin6_family = AF_INET6;
++        MsgHdr->msg_name = &IoBlock->Route.RemoteAddress;
++        MsgHdr->msg_namelen = sizeof(struct sockaddr_in6);
++
+         int Ret =
+             recvmmsg(
+                 SocketContext->SocketFd,
+@@ -1844,6 +1891,9 @@ CxPlatSocketReceiveMessages(
+ 
+             IoBlocks[i] = IoBlock;
+             CxPlatZeroMemory(&IoBlock->Route, sizeof(CXPLAT_ROUTE));
++            CxPlatZeroMemory(&RecvMsgControl[i], sizeof(RecvMsgControl[i]));
++            CxPlatZeroMemory(&RecvMsgHdr[i], sizeof(RecvMsgHdr[i]));
++
+             IoBlock->Route.State = RouteResolved;
+ 
+             struct msghdr* MsgHdr = &RecvMsgHdr[i].msg_hdr;
+@@ -1858,6 +1908,37 @@ CxPlatSocketReceiveMessages(
+             RecvIov[i].iov_len = CXPLAT_SMALL_IO_BUFFER_SIZE;
+         }
+ 
++        for (uint32_t i = 0; i < CXPLAT_MAX_IO_BATCH_SIZE; ++i) {
++            // Control buffer MUST be cleared every iteration, otherwise tail garbage
++            // can be interpreted as cmsghdrs by Gramine’s dump code.
++            CxPlatZeroMemory(&RecvMsgControl[i], sizeof(RecvMsgControl[i]));
++
++            struct msghdr* MsgHdr = &RecvMsgHdr[i].msg_hdr;
++
++            // Reset in/out lengths every call.
++            MsgHdr->msg_name = &IoBlocks[i]->Route.RemoteAddress;
++
++            MsgHdr->msg_namelen = sizeof(((DATAPATH_RX_IO_BLOCK*)0)->Route.RemoteAddress);
++
++            MsgHdr->msg_iov = &RecvIov[i];
++            MsgHdr->msg_iovlen = 1;
++
++            MsgHdr->msg_control = &RecvMsgControl[i].Data;            
++            MsgHdr->msg_controllen = sizeof(RecvMsgControl[i].Data);
++
++            // Defensive: always clear flags too.
++            MsgHdr->msg_flags = 0;
++
++            // Ensure msg_name buffer looks like a valid sockaddr before Gramine dumps it.
++            CxPlatZeroMemory(&IoBlocks[i]->Route.RemoteAddress, sizeof(IoBlocks[i]->Route.RemoteAddress));
++            IoBlocks[i]->Route.RemoteAddress.Ipv6.sin6_family = AF_INET6; // big enough buffer; kernel will overwrite
++            MsgHdr->msg_name = &IoBlocks[i]->Route.RemoteAddress;
++            MsgHdr->msg_namelen = sizeof(struct sockaddr_in6);            
++        }
++
++
++
++
+         int Ret =
+             recvmmsg(
+                 SocketContext->SocketFd,
+@@ -2047,6 +2128,7 @@ SendDataAlloc(
+         SendData->OnConnectedSocket = Socket->Connected;
+         SendData->SegmentationSupported =
+             !!(Socket->Datapath->Features & CXPLAT_DATAPATH_FEATURE_SEND_SEGMENTATION);
++           
+         SendData->Iovs[0].iov_len = 0;
+         SendData->Iovs[0].iov_base = SendData->Buffer;
+         SendData->DatapathType = Config->Route->DatapathType = CXPLAT_DATAPATH_TYPE_NORMAL;
+@@ -2186,6 +2268,10 @@ SocketSend(
+     CxPlatConvertToMappedV6(&Route->RemoteAddress, &SendData->RemoteAddress);
+     SendData->LocalAddress = Route->LocalAddress;
+ 
++    // Normalize for Gramine syscall dumps:
++    CxPlatNormalizeSockaddrForSyscall(&SendData->RemoteAddress);
++    CxPlatNormalizeSockaddrForSyscall(&SendData->LocalAddress);
++
+     //
+     // Check to see if we need to pend because there's already queue.
+     //
+@@ -2252,6 +2338,8 @@ CxPlatSendDataPopulateAncillaryData(
+     _Inout_ struct msghdr* Mhdr
+     )
+ {
++    CxPlatNormalizeSockaddrForSyscall(&SendData->LocalAddress);
++    CxPlatNormalizeSockaddrForSyscall(&SendData->RemoteAddress);
+     Mhdr->msg_controllen = CMSG_SPACE(sizeof(int));
+     struct cmsghdr *CMsg = CMSG_FIRSTHDR(Mhdr);
+     CMsg->cmsg_level = SendData->LocalAddress.Ip.sa_family == AF_INET ? IPPROTO_IP : IPPROTO_IPV6;
+@@ -2429,7 +2517,7 @@ CxPlatSendDataSend(
+         Success =
+ #ifdef UDP_SEGMENT
+             SendData->SegmentationSupported ?
+-                CxPlatSendDataSendSegmented(SendData) : CxPlatSendDataSendMessages(SendData);
++                CxPlatSendDataSendSegmented(SendData) : CxPlatSendDataSendMessages(SendData);                
+ #else
+             CxPlatSendDataSendMessages(SendData);
+ #endif
