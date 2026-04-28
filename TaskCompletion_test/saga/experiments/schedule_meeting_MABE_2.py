@@ -8,7 +8,11 @@ import argparse
 import msquic
 import pickle
 import time
-import subprocess
+import ctypes
+from ctypes import (
+    POINTER, byref, c_char_p, c_int, c_size_t, c_ubyte, c_void_p,
+    create_string_buffer,
+)
 from agent_backend.base import get_agent
 from datetime import datetime
 from agent_backend.tools.calendar import LocalCalendarTool
@@ -262,10 +266,36 @@ def run_query(config: UserConfig, agent_index: int, other_user_config_path: str)
             
     print("done")
 
+_MABE_HERE = os.path.dirname(os.path.abspath(__file__))
+_libmabe = ctypes.CDLL(os.path.join(_MABE_HERE, "libmabe.so"))
+_libmabe.mabe_ctx_create.argtypes = [c_char_p, c_char_p]
+_libmabe.mabe_ctx_create.restype = c_void_p
+_libmabe.mabe_ctx_free.argtypes = [c_void_p]
+_libmabe.mabe_ctx_free.restype = None
+_libmabe.mabe_decrypt_key32_files.argtypes = [c_void_p, c_char_p, c_char_p, POINTER(c_ubyte)]
+_libmabe.mabe_decrypt_key32_files.restype = c_int
+_libmabe.mabe_encrypt_json_for_key32_files.argtypes = [
+    c_void_p, c_char_p, c_char_p, c_char_p,
+    POINTER(c_ubyte), c_char_p, c_size_t, POINTER(c_size_t),
+]
+_libmabe.mabe_encrypt_json_for_key32_files.restype = c_int
+_mabe_ctx = _libmabe.mabe_ctx_create(b"a.param", b"public.json")
+if not _mabe_ctx:
+    raise RuntimeError("mabe_ctx_create failed")
+
 def MABE_encrypt(agent_key):
-    subprocess.run("./MABE-encrypt")
-    encrypted_key_f = open('encrypt.json')
-    encrypted_key_bytes = json.dumps(json.load(encrypted_key_f)).encode()
+    buf = create_string_buffer(256 * 1024)
+    out_len = c_size_t(0)
+    key_arr = (c_ubyte * 32).from_buffer_copy(agent_key)
+    rc = _libmabe.mabe_encrypt_json_for_key32_files(
+        _mabe_ctx, b"Auth1.json", b"Auth2.json", b"Auth3.json",
+        key_arr, buf, ctypes.sizeof(buf), byref(out_len),
+    )
+    if rc != 0:
+        raise RuntimeError(f"mabe_encrypt_json_for_key32_files failed rc={rc} need={out_len.value}")
+    encrypted_key_bytes = buf.value
+    with open("encrypt.json", "wb") as f:
+        f.write(encrypted_key_bytes)
     return encrypted_key_bytes
 
 def encrypt(data, agent_key, iv):
@@ -277,10 +307,15 @@ def encrypt(data, agent_key, iv):
     return encrypted_data
 
 def MABE_decrypt(encrypted_agent_key):
-    keyBytes = subprocess.run("./MABE-decrypt", capture_output=True, text=True).stdout
-    decrypted_key = bytes.fromhex(keyBytes)
-
-    print(keyBytes)
+    if encrypted_agent_key is not None:
+        with open("encrypt.json", "wb") as f:
+            f.write(encrypted_agent_key)
+    out_key = (c_ubyte * 32)()
+    rc = _libmabe.mabe_decrypt_key32_files(_mabe_ctx, b"encrypt.json", b"userInfo.json", out_key)
+    if rc != 0:
+        raise RuntimeError(f"mabe_decrypt_key32_files failed rc={rc}")
+    decrypted_key = bytes(out_key)
+    print(decrypted_key.hex())
     return decrypted_key
 
 def decrypt(encrypted_prompt, agent_key, iv):  

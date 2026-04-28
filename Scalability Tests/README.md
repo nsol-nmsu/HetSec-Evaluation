@@ -15,6 +15,14 @@ gramine-sgx-sign \
 --output pytorch.manifest.sgx
  ````
 
+## Requirements
+The HetSec test scripts load `libmabe.so` in-process via `ctypes` (no more `subprocess` calls to `MABE-encrypt`/`MABE-decrypt`). Build it once in each directory that contains a `mabe_api.cpp`:
+````
+g++ -O2 -fPIC -shared mabe_api.cpp -o libmabe.so \
+  -I/usr/local/include/pbc -lpbc -lgmp
+````
+For this test set that means both `SGX-gramine/src/` and `VM-Based/src/`. System requirements (PBC, GMP, nlohmann/json) and install commands are documented in `Required_Libs/README.md`.
+
 For replicating the results from the paper use A SGX machine for Agent 3, a SEV-SNP machine for Agent 2, TDX machine for Agent 1, and a edge machine for the Client. Each should be deployed in the order specified, Agent 3, Agent 2, Agent 1, and finally client. 
 
 ## Server Machine Agent Provider Test

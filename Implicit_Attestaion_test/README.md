@@ -1,12 +1,13 @@
 # Bootstrapping test
 
 ## Requiremnts
-For the MABE expirments first ensure the MABE API is built; from the Attest_SACM directory.
+For the MABE experiments first build `libmabe.so` in each directory that contains a `mabe_api.cpp`. For this test set that means both `Attest_SACM/` and `Attest_Traditional/TDX/`:
 ````
 g++ -O2 -fPIC -shared mabe_api.cpp -o libmabe.so \
   -I/usr/local/include/pbc -lpbc -lgmp
-
 ````
+
+System requirements (PBC, GMP, nlohmann/json) and install commands are documented in `Required_Libs/README.md`.
 
 Ensure all requried libraries are built. 
 

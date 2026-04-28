@@ -2,7 +2,16 @@
 
 These experiemnts require at least two machines. Either application can be run on SGX or gramine using the following commands to make the enviorment: 
 
-For replicating the results from the paper use a machine in the cloud for the reciving agent and a edge machine for the initator. make sure the recieving agent is deployed first. 
+For replicating the results from the paper use a machine in the cloud for the reciving agent and a edge machine for the initator. make sure the recieving agent is deployed first.
+
+## Requirements
+The HetSec test scripts (`*_MABE.py`) load `libmabe.so` in-process via `ctypes`. Build it once in `saga/experiments/` before running any HetSec test:
+````
+cd saga/experiments
+g++ -O2 -fPIC -shared mabe_api.cpp -o libmabe.so \
+  -I/usr/local/include/pbc -lpbc -lgmp
+````
+System requirements (PBC, GMP, nlohmann/json) and install commands are documented in `Required_Libs/README.md`. Note that `*.so` is gitignored under `saga/`, so this build step is required on every fresh clone. 
 
 ## Server Machine Agent Provider Test
 

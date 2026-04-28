@@ -1,20 +1,32 @@
 #!/usr/bin/env python3
 """
-Sequentially time ./MABE-decrypt N times (no async, no parallelism).
+Sequentially time MABE decrypt via libmabe.so N times (no async, no parallelism).
 
 Outputs:
 - timings.txt: one elapsed_s per line (raw samples)
 - prints mu and sigma (sample and population) for a normal distribution fit
 """
 
-import subprocess
+import os
 import time
 import statistics
+import ctypes
+from ctypes import POINTER, c_char_p, c_int, c_void_p, c_ubyte
 
-CMD = ["./MABE-decrypt"]
+HERE = os.path.dirname(os.path.abspath(__file__))
 N = 1000
 WARMUP = 10
 OUTFILE = "timings.txt"  # one elapsed_s per line
+
+def load_lib():
+    lib = ctypes.CDLL(os.path.join(HERE, "libmabe.so"))
+    lib.mabe_ctx_create.argtypes = [c_char_p, c_char_p]
+    lib.mabe_ctx_create.restype = c_void_p
+    lib.mabe_ctx_free.argtypes = [c_void_p]
+    lib.mabe_ctx_free.restype = None
+    lib.mabe_decrypt_key32_files.argtypes = [c_void_p, c_char_p, c_char_p, POINTER(c_ubyte)]
+    lib.mabe_decrypt_key32_files.restype = c_int
+    return lib
 
 def percentile(sorted_vals, p: float) -> float:
     # linear interpolation percentile, p in [0,100]
@@ -24,28 +36,32 @@ def percentile(sorted_vals, p: float) -> float:
     frac = k - lo
     return sorted_vals[lo] * (1 - frac) + sorted_vals[hi] * frac
 
-def run_once() -> float:
+def run_once(lib, ctx) -> float:
+    out_key = (c_ubyte * 32)()
     t0 = time.perf_counter()
-    r = subprocess.run(
-        CMD,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-        text=False,
-    )
+    rc = lib.mabe_decrypt_key32_files(ctx, b"encrypt.json", b"userInfo.json", out_key)
     t1 = time.perf_counter()
-    if r.returncode != 0:
-        raise RuntimeError(f"decrypt failed with return code {r.returncode}")
+    if rc != 0:
+        raise RuntimeError(f"mabe_decrypt_key32_files failed rc={rc}")
     return t1 - t0
 
 def main():
-    # warmup
-    for _ in range(WARMUP):
-        run_once()
+    os.chdir(HERE)
+    lib = load_lib()
+    ctx = lib.mabe_ctx_create(b"a.param", b"public.json")
+    if not ctx:
+        raise RuntimeError("mabe_ctx_create failed")
 
-    times = []
-    for _ in range(N):
-        times.append(run_once())
+    try:
+        # warmup
+        for _ in range(WARMUP):
+            run_once(lib, ctx)
+
+        times = []
+        for _ in range(N):
+            times.append(run_once(lib, ctx))
+    finally:
+        lib.mabe_ctx_free(ctx)
 
     with open(OUTFILE, "w", encoding="utf-8") as f:
         for t in times:

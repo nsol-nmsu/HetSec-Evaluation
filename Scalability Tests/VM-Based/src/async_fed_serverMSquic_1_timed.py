@@ -21,7 +21,11 @@ from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 import msquic
 from multiprocessing import Pool
-import subprocess
+import ctypes
+from ctypes import (
+    POINTER, byref, c_char_p, c_int, c_size_t, c_ubyte, c_void_p,
+    create_string_buffer,
+)
 import json
 import random
 import asyncio
@@ -42,8 +46,33 @@ client_keys = {}
 chunkSize = 1368
 agent_key = bytes.fromhex("C09A05030C15CBC957E60D0678BD47451367E9BBC427EC5B5C60E9C6B286C87B")
 padder = padding.PKCS7(128).padder()
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_libmabe = ctypes.CDLL(os.path.join(_HERE, "libmabe.so"))
+_libmabe.mabe_ctx_create.argtypes = [c_char_p, c_char_p]
+_libmabe.mabe_ctx_create.restype = c_void_p
+_libmabe.mabe_ctx_free.argtypes = [c_void_p]
+_libmabe.mabe_ctx_free.restype = None
+_libmabe.mabe_encrypt_json_for_key32_files.argtypes = [
+    c_void_p, c_char_p, c_char_p, c_char_p,
+    POINTER(c_ubyte), c_char_p, c_size_t, POINTER(c_size_t),
+]
+_libmabe.mabe_encrypt_json_for_key32_files.restype = c_int
+
+_mabe_ctx = _libmabe.mabe_ctx_create(b"a.param", b"public.json")
+if not _mabe_ctx:
+    raise RuntimeError("mabe_ctx_create failed")
+
 encrypted_key_f = open('encrypt1.json')
-subprocess.run("./MABE-encrypt")
+_buf = create_string_buffer(256 * 1024)
+_out_len = c_size_t(0)
+_key_arr = (c_ubyte * 32).from_buffer_copy(agent_key)
+_rc = _libmabe.mabe_encrypt_json_for_key32_files(
+    _mabe_ctx, b"Auth1.json", b"Auth2.json", b"Auth3.json",
+    _key_arr, _buf, ctypes.sizeof(_buf), byref(_out_len),
+)
+if _rc != 0:
+    raise RuntimeError(f"mabe_encrypt_json_for_key32_files failed rc={_rc} need={_out_len.value}")
 encrypted_key_bytes = json.dumps(json.load(encrypted_key_f)).encode()
 iv = bytes.fromhex("22dc9c199a5d430a95a4020b1348130a")
 agent_cipher = Cipher(algorithms.AES(agent_key), modes.CBC(iv))
