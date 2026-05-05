@@ -7,9 +7,7 @@ import asyncio
 import ssl
 import re
 import base64
-from attest_util import gen_tdx_quote_bytes
-
-my_quote = gen_tdx_quote_bytes("config.json")
+from attest_util import gen_report_bytes_bound_to_nonce, nonce_to_report_data_hex
 
 _PEM_RE = re.compile(
     r"-----BEGIN (?:TRUSTED )?CERTIFICATE-----\s+"
@@ -17,6 +15,8 @@ _PEM_RE = re.compile(
     r"-----END (?:TRUSTED )?CERTIFICATE-----",
     re.S,
 )
+
+my_report = gen_report_bytes_bound_to_nonce(use_platform=True)
 
 def pem_certfile_to_der(path: str) -> bytes:
     data = open(path, "rb").read()
@@ -77,14 +77,14 @@ async def runTask(addr_provider, addr_authority, ssl_ctx):
 
 
 async def runTaskAttest2(addr, ssl_ctx):
-    global my_quote
+    global my_report
     t0 = time.perf_counter()
     reader, writer = await asyncio.open_connection(
     addr, 5007, ssl=ssl_ctx, family=socket.AF_INET
     )
     t_handshake = time.perf_counter()
 
-    await write_framed(writer, b'Coordinator_Attest_2'+my_quote)
+    await write_framed(writer, b'Coordinator_Attest_2'+my_report)
     t_sendReq = time.perf_counter()
 
     attributes = await read_framed(reader)
@@ -112,7 +112,7 @@ async def main():
     port = random.randrange(2550,5000)
 
     tasks = []
-    while i < 150:
+    while i < 10000:
         await asyncio.sleep(0.0001)
         task = asyncio.create_task(runTask(addr_provider, addr_authority, ssl_ctx))
         tasks.append(task)

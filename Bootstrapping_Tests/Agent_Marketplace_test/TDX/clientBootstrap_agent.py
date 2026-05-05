@@ -4,21 +4,15 @@ import random
 import socket
 import json
 import asyncio
-import ssl 
+import ssl
 import re
 import base64
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.backends import default_backend
 from attest_util import gen_tdx_quote_bytes
 
-key = bytes.fromhex("C09A05030C15CBC957E60D0678BD47451367E9BBC427EC5B5C60E9C6B286C87B")
-iv = bytes.fromhex("22dc9c199a5d430a95a4020b1348130a")
-cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-encryptor = cipher.encryptor()
-padder = padding.PKCS7(128).padder()
-encryptor = cipher.encryptor()    
 my_quote = gen_tdx_quote_bytes("config.json")
+
+coor_addr = "Insert IP Here"
+ap_addr = "Insert IP Here"
 
 _PEM_RE = re.compile(
     r"-----BEGIN (?:TRUSTED )?CERTIFICATE-----\s+"
@@ -35,7 +29,7 @@ def pem_certfile_to_der(path: str) -> bytes:
         raise ValueError(f"No PEM certificate block found in {path}")
     b64 = re.sub(r"\s+", "", m.group(1))
     return base64.b64decode(b64)
-                  
+
 
 def chunks_for_len(n: int) -> bytes:
     chunks = (n + 1023) // 1024
@@ -55,13 +49,13 @@ async def read_framed(reader):
     data = b""
     for _ in range(chunks):
         data += await reader.read(1024)
-    return data    
+    return data
 
 async def runTask(addr,ssl_ctx):
     t0 = time.perf_counter()
     reader, writer = await asyncio.open_connection(
     addr, 5007, ssl=ssl_ctx, family=socket.AF_INET
-    ) 
+    )
     t_handshake = time.perf_counter()
 
     await write_framed(writer, b'Agent_Start')
@@ -85,39 +79,27 @@ async def runTask(addr,ssl_ctx):
     writer.close()
     await writer.wait_closed()
 
-    await runTaskAttest(addr,ssl_ctx)
+    await runTaskAttest(coor_addr,ssl_ctx)
 
 async def runTaskAttest(addr,ssl_ctx):
     global my_quote
     t0 = time.perf_counter()
     reader, writer = await asyncio.open_connection(
     addr, 5007, ssl=ssl_ctx, family=socket.AF_INET
-    ) 
+    )
     t_handshake = time.perf_counter()
 
     await write_framed(writer, b'Agent_Attest'+my_quote)
     t_sendReq = time.perf_counter()
 
-    key_IV =  await read_framed(reader)
+    attributes =  await read_framed(reader)
     t_resp  = time.perf_counter()
 
-    if not key_IV:
+    if not attributes:
         raise RuntimeError("server closed before sending response")
 
     writer.close()
     await writer.wait_closed()
-
-    coor_key = key_IV[0:16]
-    coor_IV = key_IV[16:32]
-    attributes = key_IV[32:]
-
-
-    cipher = Cipher(algorithms.AES(coor_key), modes.CBC(coor_IV), backend=default_backend())
-    decryptor = cipher.decryptor()
-    unpadder = padding.PKCS7(128).unpadder()
-    with open("encrypted_file.txt", 'rb') as file:
-        encyrpted_file = file.read()
-    #decrypted_weights = decryptor.update(encyrpted_file) + decryptor.finalize()
 
     t_done  = time.perf_counter()
 
@@ -130,15 +112,12 @@ async def main():
     ssl_ctx.verify_mode = ssl.CERT_NONE  # we verify via RA-TLS after handshake
     ssl_ctx.load_cert_chain('client.crt', 'client.key')
 
-    addr = "20.83.35.85"
-    addr = "57.154.240.53"
     port = random.randrange(2550,5000)
 
     tasks = []
-    while i < 10000:  
+    while i < 10000:
         await asyncio.sleep(0.0001)
-        task = asyncio.create_task(runTask(addr,ssl_ctx))
-        #task = asyncio.create_task(runTaskAttest(addr,ssl_ctx))
+        task = asyncio.create_task(runTask(ap_addr,ssl_ctx))
         tasks.append(task)
         i+=1
     await asyncio.gather(*tasks)
@@ -148,5 +127,3 @@ async def main():
 if __name__ == '__main__':
     #main()
     asyncio.run(main())
-
-

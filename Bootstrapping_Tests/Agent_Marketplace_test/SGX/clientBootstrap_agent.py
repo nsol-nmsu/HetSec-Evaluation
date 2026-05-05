@@ -7,21 +7,10 @@ import asyncio
 import ssl 
 import re
 import base64
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.backends import default_backend
-
 
 coor_addr = "Insert IP Here"
 ap_addr = "Insert IP Here"
 
-
-key = bytes.fromhex("C09A05030C15CBC957E60D0678BD47451367E9BBC427EC5B5C60E9C6B286C87B")
-iv = bytes.fromhex("22dc9c199a5d430a95a4020b1348130a")
-cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-encryptor = cipher.encryptor()
-padder = padding.PKCS7(128).padder()
-encryptor = cipher.encryptor()    
  
 _PEM_RE = re.compile(
     r"-----BEGIN (?:TRUSTED )?CERTIFICATE-----\s+"
@@ -101,26 +90,14 @@ async def runTaskAttest(addr,ssl_ctx):
     await write_framed(writer, b'Agent_Attest'+client_cert_der)
     t_sendReq = time.perf_counter()
 
-    key_IV =  await read_framed(reader)
+    attributes =  await read_framed(reader)
     t_resp  = time.perf_counter()
 
-    if not key_IV:
+    if not attributes:
         raise RuntimeError("server closed before sending response")
 
     writer.close()
     await writer.wait_closed()
-
-    coor_key = key_IV[0:16]
-    coor_IV = key_IV[16:32]
-    attributes = key_IV[32:]
-
-
-    cipher = Cipher(algorithms.AES(coor_key), modes.CBC(coor_IV), backend=default_backend())
-    decryptor = cipher.decryptor()
-    unpadder = padding.PKCS7(128).unpadder()
-    with open("encrypted_file.txt", 'rb') as file:
-        encyrpted_file = file.read()
-    #decrypted_weights = decryptor.update(encyrpted_file) + decryptor.finalize()
 
     t_done  = time.perf_counter()
 

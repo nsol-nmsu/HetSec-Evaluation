@@ -7,16 +7,6 @@ import asyncio
 import ssl 
 import re
 import base64
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.backends import default_backend
-
-key = bytes.fromhex("C09A05030C15CBC957E60D0678BD47451367E9BBC427EC5B5C60E9C6B286C87B")
-iv = bytes.fromhex("22dc9c199a5d430a95a4020b1348130a")
-cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-encryptor = cipher.encryptor()
-padder = padding.PKCS7(128).padder()
-encryptor = cipher.encryptor()    
 
 
 _PEM_RE = re.compile(
@@ -93,13 +83,6 @@ async def main():
 
     coor_key = key_IV[0:-16]
     coor_IV = key_IV[-16:]
-
-    cipher = Cipher(algorithms.AES(coor_key), modes.CBC(coor_IV), backend=default_backend())
-    decryptor = cipher.decryptor()
-    unpadder = padding.PKCS7(128).unpadder()
-    with open("encrypted_file.txt", 'rb') as file:
-        encyrpted_file = file.read()
-    decrypted_weights = decryptor.update(encyrpted_file) + decryptor.finalize()
 
     t_done  = time.perf_counter()
 

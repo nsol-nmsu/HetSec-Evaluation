@@ -7,9 +7,12 @@ import asyncio
 import ssl
 import re
 import base64
-from attest_util import gen_tdx_quote_bytes
+from attest_util import gen_report_bytes_bound_to_nonce, nonce_to_report_data_hex
 
-my_quote = gen_tdx_quote_bytes("config.json")
+my_report = gen_report_bytes_bound_to_nonce(use_platform=True)
+
+coor_addr = "Insert IP Here"
+ap_addr = "Insert IP Here"
 
 _PEM_RE = re.compile(
     r"-----BEGIN (?:TRUSTED )?CERTIFICATE-----\s+"
@@ -48,14 +51,14 @@ async def read_framed(reader):
         data += await reader.read(1024)
     return data
 
-async def runTask(addr_provider, addr_authority, ssl_ctx):
+async def runTask(addr,ssl_ctx):
     t0 = time.perf_counter()
     reader, writer = await asyncio.open_connection(
-    addr_provider, 5007, ssl=ssl_ctx, family=socket.AF_INET
+    addr, 5007, ssl=ssl_ctx, family=socket.AF_INET
     )
     t_handshake = time.perf_counter()
 
-    await write_framed(writer, b'Coordinator_Start')
+    await write_framed(writer, b'Agent_Start')
     t_sendReq = time.perf_counter()
 
 
@@ -73,22 +76,21 @@ async def runTask(addr_provider, addr_authority, ssl_ctx):
     writer.close()
     await writer.wait_closed()
 
-    await runTaskAttest2(addr_authority, ssl_ctx)
+    await runTaskAttest(coor_addr,ssl_ctx)
 
-
-async def runTaskAttest2(addr, ssl_ctx):
-    global my_quote
+async def runTaskAttest(addr,ssl_ctx):
+    global my_report
     t0 = time.perf_counter()
     reader, writer = await asyncio.open_connection(
     addr, 5007, ssl=ssl_ctx, family=socket.AF_INET
     )
     t_handshake = time.perf_counter()
 
-    await write_framed(writer, b'Coordinator_Attest_2'+my_quote)
+    await write_framed(writer, b'Agent_Attest'+my_report)
     t_sendReq = time.perf_counter()
 
-    attributes = await read_framed(reader)
-
+    attributes =  await read_framed(reader)
+    t_resp  = time.perf_counter()
 
     if not attributes:
         raise RuntimeError("server closed before sending response")
@@ -107,14 +109,12 @@ async def main():
     ssl_ctx.verify_mode = ssl.CERT_NONE  # we verify via RA-TLS after handshake
     ssl_ctx.load_cert_chain('client.crt', 'client.key')
 
-    addr_provider = "20.83.35.85"
-    addr_authority = "57.154.240.53"
     port = random.randrange(2550,5000)
 
     tasks = []
-    while i < 150:
+    while i < 10000:
         await asyncio.sleep(0.0001)
-        task = asyncio.create_task(runTask(addr_provider, addr_authority, ssl_ctx))
+        task = asyncio.create_task(runTask(ap_addr,ssl_ctx))
         tasks.append(task)
         i+=1
     await asyncio.gather(*tasks)

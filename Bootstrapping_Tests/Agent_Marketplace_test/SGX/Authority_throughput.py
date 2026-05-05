@@ -4,9 +4,7 @@ import socket
 import queue
 import asyncio
 import ssl
-
-with open("coorApp.py","rb") as f: raw_app_file = f.read()
-
+from attest_util_async import verify_peer_cert_via_qve
 
 total = 0
 async def read_framed(reader):
@@ -39,14 +37,25 @@ async def handle_client(reader, writer):
     request = await read_framed(reader)
 
     response = None
-    if request == b'Coordinator_Start':
-        with open("bootApp.py", 'r') as file:
-            response = file.read().encode("utf-8")
-        response += b'Item' + raw_app_file
-    elif request == b'Agent_Start':
-        with open("bootApp.py", 'r') as file:
-            response = file.read().encode("utf-8")
-        response += b'Item' + raw_app_file
+    if request[0:20] == b'Coordinator_Attest_2':
+        if not request[20:]:
+            writer.close()
+            await writer.wait_closed()
+            return
+        '''
+        try:
+            ver = await verify_peer_cert_via_qve(request[20:], "127.0.0.1", 7777)
+
+        except Exception as e:
+            print(f"Client attestation exception: {e}")
+            writer.close()
+            await writer.wait_closed()
+            return
+        '''
+        await asyncio.sleep(.015981) # Average time for execution
+
+        with open("userInfo.json", 'rb') as file:
+            response = file.read()
 
     await write_framed(writer, response)
     await writer.drain()
@@ -55,7 +64,7 @@ async def handle_client(reader, writer):
     writer.close()
     await writer.wait_closed()
 
-    if request == b'Coordinator_Start' or request == b'Agent_Start':
+    if request[0:20] == b'Coordinator_Attest_2':
         total += 1
         if total == 10000:
             print(f"{t_resp - t_0}, {total}")

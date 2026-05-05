@@ -1,8 +1,160 @@
 #!/usr/bin/env python3
-import json, os, socket, struct, subprocess, tempfile
-from typing import Optional
+"""In-process SEV-SNP attestation report verifier."""
 
-def recvn(sock, n: int) -> bytes:
+import json
+import os
+import socket
+import struct
+import threading
+import urllib.request
+
+from cryptography import x509
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+
+KDS_BASE = "https://kdsintf.amd.com"
+DEFAULT_PROCESSOR_MODEL = os.environ.get("SNP_PROCESSOR_MODEL", "Milan")
+
+# CA chain cache — static across deployment, realistic to cache.
+_ca_cache: dict = {}
+_ca_lock = threading.Lock()
+
+
+# --- SNP report parser (1184 bytes) ----
+# Signed body = bytes 0..672. Signature = bytes 672..1184 (72 LE r + 72 LE s).
+_SIGNED_BODY_LEN = 0x2A0
+
+
+def parse_report(data: bytes) -> dict:
+    if len(data) < 1184:
+        raise ValueError(f"report too short: {len(data)} bytes")
+    return {
+        "report_data":  data[80:144],
+        "measurement":  data[144:192],
+        "reported_tcb": struct.unpack_from("<Q", data, 384)[0],
+        "chip_id":      data[416:480],
+        "signed_body":  data[:_SIGNED_BODY_LEN],
+        "sig_r_le":     data[672:672 + 72],
+        "sig_s_le":     data[744:744 + 72],
+    }
+
+
+def tcb_to_query(tcb: int) -> dict:
+    return {
+        "blSPL":    (tcb >>  0) & 0xFF,
+        "teeSPL":   (tcb >>  8) & 0xFF,
+        "snpSPL":   (tcb >> 48) & 0xFF,
+        "ucodeSPL": (tcb >> 56) & 0xFF,
+    }
+
+
+# --- KDS fetchers ----
+
+def fetch_ca_chain(pm: str):
+    with _ca_lock:
+        if pm in _ca_cache:
+            return _ca_cache[pm]
+    url = f"{KDS_BASE}/vcek/v1/{pm}/cert_chain"
+    with urllib.request.urlopen(url, timeout=30) as r:
+        chain_pem = r.read()
+    certs = x509.load_pem_x509_certificates(chain_pem)
+    if len(certs) < 2:
+        raise RuntimeError(f"unexpected CA chain length: {len(certs)}")
+    ask, ark = certs[0], certs[1]
+    with _ca_lock:
+        _ca_cache[pm] = (ark, ask)
+    return ark, ask
+
+
+def fetch_vcek(pm: str, chip_id: bytes, tcb: int) -> x509.Certificate:
+    q = tcb_to_query(tcb)
+    url = (f"{KDS_BASE}/vcek/v1/{pm}/{chip_id.hex()}"
+           f"?blSPL={q['blSPL']}&teeSPL={q['teeSPL']}"
+           f"&snpSPL={q['snpSPL']}&ucodeSPL={q['ucodeSPL']}")
+    with urllib.request.urlopen(url, timeout=30) as r:
+        return x509.load_der_x509_certificate(r.read())
+
+
+# --- Signature verification ----
+
+def _verify_cert_signed_by(child: x509.Certificate, parent: x509.Certificate):
+    pub = parent.public_key()
+    sig = child.signature
+    tbs = child.tbs_certificate_bytes
+    halg = child.signature_hash_algorithm
+    if isinstance(pub, rsa.RSAPublicKey):
+        pub.verify(sig, tbs, padding.PKCS1v15(), halg)
+    elif isinstance(pub, ec.EllipticCurvePublicKey):
+        pub.verify(sig, tbs, ec.ECDSA(halg))
+    else:
+        raise RuntimeError(f"unsupported key type: {type(pub).__name__}")
+
+
+def verify_chain(vcek, ask, ark):
+    _verify_cert_signed_by(vcek, ask)
+    _verify_cert_signed_by(ask, ark)
+    _verify_cert_signed_by(ark, ark)
+
+
+def verify_report_signature(fields: dict, vcek: x509.Certificate):
+    # SNP signature is two 72-byte LE numbers; first 48 bytes used (P-384).
+    r = int.from_bytes(fields["sig_r_le"][:48], "little")
+    s = int.from_bytes(fields["sig_s_le"][:48], "little")
+    der_sig = encode_dss_signature(r, s)
+    vcek.public_key().verify(der_sig, fields["signed_body"], ec.ECDSA(hashes.SHA384()))
+
+
+def verify_snp_report(report_bytes: bytes,
+                      expected_measurement_hex,
+                      expected_report_data_hex,
+                      endorser: str = "vcek",
+                      processor_model: str = None) -> dict:
+    if endorser != "vcek":
+        return {"ok": False, "stage": "unsupported_endorser", "rc": 1,
+                "out": f"only vcek supported; got {endorser}"}
+    pm = processor_model or DEFAULT_PROCESSOR_MODEL
+
+    try:
+        f = parse_report(report_bytes)
+    except Exception as e:
+        return {"ok": False, "stage": "parse_report", "rc": 1, "out": str(e)}
+
+    if expected_measurement_hex:
+        em = expected_measurement_hex.lower().lstrip("0x")
+        if f["measurement"].hex() != em:
+            return {"ok": False, "stage": "verify_measurement", "rc": 1,
+                    "out": f"measurement mismatch: got {f['measurement'].hex()} expected {em}"}
+    if expected_report_data_hex:
+        ed = expected_report_data_hex.lower().lstrip("0x")
+        if f["report_data"].hex() != ed:
+            return {"ok": False, "stage": "verify_report_data", "rc": 1,
+                    "out": f"report_data mismatch: got {f['report_data'].hex()} expected {ed}"}
+
+    try:
+        ark, ask = fetch_ca_chain(pm)
+    except Exception as e:
+        return {"ok": False, "stage": "fetch_ca", "rc": 1, "out": str(e)}
+    try:
+        vcek = fetch_vcek(pm, f["chip_id"], f["reported_tcb"])
+    except Exception as e:
+        return {"ok": False, "stage": "fetch_vcek", "rc": 1, "out": str(e)}
+    try:
+        verify_chain(vcek, ask, ark)
+    except InvalidSignature as e:
+        return {"ok": False, "stage": "verify_certs", "rc": 1, "out": str(e)}
+    try:
+        verify_report_signature(f, vcek)
+    except InvalidSignature as e:
+        return {"ok": False, "stage": "verify_attestation", "rc": 1, "out": str(e)}
+
+    return {"ok": True, "stage": "ok", "rc": 0, "out": ""}
+
+
+# --- TCP server (wire protocol unchanged) ----
+
+def _recvn(sock, n):
     b = b""
     while len(b) < n:
         x = sock.recv(n - len(b))
@@ -11,96 +163,21 @@ def recvn(sock, n: int) -> bytes:
         b += x
     return b
 
-def run(cmd, cwd=None):
-    p = subprocess.run(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    return p.returncode, p.stdout
 
-def verify_snp_report_with_snpguest(
-    report_bytes: bytes,
-    expected_measurement_hex: Optional[str],
-    expected_report_data_hex: Optional[str],
-    endorser: str = "vcek",   # or "vlek"
-) -> dict:
-    """
-    Uses snpguest workflow:
-      fetch ca  (ARK/ASK or ARK/ASVK)
-      fetch vcek (or vlek flow if your environment supports it)
-      verify certs
-      verify attestation (+ optional measurement/report-data checks)
-    """
-    expected_measurement_hex = expected_measurement_hex
-    #expected_report_data_hex = "0x" + expected_report_data_hex
-
-
-    with tempfile.TemporaryDirectory(prefix="snpverify-") as td:
-        report_path = os.path.join(td, "report.bin")
-        certs_dir = os.path.join(td, "certs")
-        os.mkdir(certs_dir)
-
-        with open(report_path, "wb") as f:
-            f.write(report_bytes)
-
-        out_lines = []
-
-        # 1) Fetch CA chain based on report processor-model
-        # snpguest fetch ca pem ./certs -r report.bin -e vcek|vlek
-        rc, out = run(["snpguest", "fetch", "ca", "pem", certs_dir, "-r", report_path, "-e", endorser])
-        out_lines.append(out)
-        if rc != 0:
-            return {"ok": False, "stage": "fetch_ca", "rc": rc, "out": "".join(out_lines)}
-
-        # 2) Fetch VCEK corresponding to chip_id + reported_tcb from report
-        # snpguest fetch vcek pem ./certs report.bin
-        if endorser == "vcek":
-            rc, out = run(["snpguest", "fetch", "vcek", "pem", certs_dir, report_path])
-            out_lines.append(out)
-            if rc != 0:
-                return {"ok": False, "stage": "fetch_vcek", "rc": rc, "out": "".join(out_lines)}
-
-        # 3) Verify cert chain
-        rc, out = run(["snpguest", "verify", "certs", certs_dir])
-        out_lines.append(out)
-        if rc != 0:
-            return {"ok": False, "stage": "verify_certs", "rc": rc, "out": "".join(out_lines)}
-
-        # 4) Verify attestation report (+ policy checks)
-        cmd = ["snpguest", "verify", "attestation", certs_dir, report_path]
-        if expected_measurement_hex:
-            cmd = ["snpguest", "verify", "attestation", "--measurement", expected_measurement_hex, certs_dir, report_path]
-        if expected_report_data_hex:
-            # If you include both, snpguest needs both flags in one command.
-            # Rebuild command to include both flags.
-            base = ["snpguest", "verify", "attestation"]
-            if expected_measurement_hex:
-                base += ["--measurement", expected_measurement_hex]
-            base += ["--report-data", expected_report_data_hex, certs_dir, report_path]
-            cmd = base
-
-        rc, out = run(cmd)
-
-        out_lines.append(out)
-        if rc != 0:
-            return {"ok": False, "stage": "verify_attestation", "rc": rc, "out": "".join(out_lines)}
-
-        return {"ok": True, "stage": "ok", "rc": 0, "out": "".join(out_lines)}
-
-def handle_conn(c: socket.socket):
-    jlen = struct.unpack("!I", recvn(c, 4))[0]
-    j = json.loads(recvn(c, jlen).decode("utf-8")) if jlen else {}
-    rlen = struct.unpack("!I", recvn(c, 4))[0]
-    report = recvn(c, rlen)
-
-    measurement = j.get("measurement")
-    report_data = j.get("report_data")
-    endorser = j.get("endorser", "vcek")
-
-    result = verify_snp_report_with_snpguest(report, measurement, report_data, endorser=endorser)
-
+def handle_conn(c):
+    jlen = struct.unpack("!I", _recvn(c, 4))[0]
+    j = json.loads(_recvn(c, jlen).decode("utf-8")) if jlen else {}
+    rlen = struct.unpack("!I", _recvn(c, 4))[0]
+    report = _recvn(c, rlen)
+    result = verify_snp_report(
+        report,
+        j.get("measurement"),
+        j.get("report_data"),
+        endorser=j.get("endorser", "vcek"),
+    )
     payload = json.dumps(result).encode("utf-8")
-    wire_rc = 0 if result.get("ok") else 1
-
-    c.sendall(struct.pack("!I", wire_rc) + struct.pack("!I", len(payload)) + payload)
-
+    rc = 0 if result.get("ok") else 1
+    c.sendall(struct.pack("!I", rc) + struct.pack("!I", len(payload)) + payload)
 
 
 def main():
@@ -109,19 +186,20 @@ def main():
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((host, port))
     s.listen(64)
-    print(f"SNP verifier listening on {host}:{port}")
+    print(f"SNP verifier (in-process) listening on {host}:{port}; processor_model={DEFAULT_PROCESSOR_MODEL}")
     while True:
         c, _ = s.accept()
         try:
             handle_conn(c)
         except Exception as e:
-            payload = json.dumps({"ok": False, "stage": "server_exception", "err": str(e)}).encode("utf-8")
+            payload = json.dumps({"ok": False, "stage": "server_exception", "out": str(e)}).encode("utf-8")
             try:
                 c.sendall(struct.pack("!I", 1) + struct.pack("!I", len(payload)) + payload)
             except Exception:
                 pass
         finally:
             c.close()
+
 
 if __name__ == "__main__":
     main()
